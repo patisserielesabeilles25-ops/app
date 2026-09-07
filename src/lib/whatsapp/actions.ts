@@ -62,7 +62,7 @@ export async function createAutomation(
   const message = String(formData.get('message') ?? '').trim();
 
   const fieldErrors: Record<string, string> = {};
-  if (triggerType !== 'canonical' && triggerType !== 'custom') {
+  if (triggerType !== 'canonical' && triggerType !== 'custom' && triggerType !== 'event') {
     fieldErrors.triggerKey = 'Choose a trigger.';
   }
   if (!triggerKey) fieldErrors.triggerKey = 'Choose a trigger.';

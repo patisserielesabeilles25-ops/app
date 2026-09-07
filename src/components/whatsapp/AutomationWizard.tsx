@@ -6,6 +6,7 @@ import { Plus, X, Check, ChevronLeft, ChevronRight, Paperclip } from 'lucide-rea
 import { createAutomation, type WhatsAppFormState } from '@/lib/whatsapp/actions';
 import {
   WHATSAPP_TRIGGERS,
+  WHATSAPP_EVENT_TRIGGERS,
   WHATSAPP_VARIABLES,
   triggerEmoji,
 } from '@/lib/whatsapp/constants';
@@ -15,7 +16,7 @@ import { tr } from '@/lib/i18n/t';
 
 const initial: WhatsAppFormState = {};
 
-type Selected = { type: 'canonical' | 'custom'; key: string; label: string; emoji: string } | null;
+type Selected = { type: 'canonical' | 'custom' | 'event'; key: string; label: string; emoji: string } | null;
 
 export function AutomationWizard({
   customStatuses,
@@ -142,6 +143,32 @@ export function AutomationWizard({
                     />
                   ))}
                 </div>
+
+                <p className="mb-3 mt-5 text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  {tr(locale, 'Events', 'مناسبات')}
+                </p>
+                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+                  {WHATSAPP_EVENT_TRIGGERS.map((t) => (
+                    <TriggerButton
+                      key={t.key}
+                      emoji={t.emoji}
+                      label={tr(locale, t.en, t.ar)}
+                      active={selected?.type === 'event' && selected.key === t.key}
+                      onClick={() =>
+                        setSelected({ type: 'event', key: t.key, label: tr(locale, t.en, t.ar), emoji: t.emoji })
+                      }
+                    />
+                  ))}
+                </div>
+                {selected?.type === 'event' ? (
+                  <p className="mt-2 text-xs text-neutral-400">
+                    {tr(
+                      locale,
+                      'Birthday messages are per client — only {name}, {phone} and {shop} apply. Sent automatically each morning.',
+                      'رسائل عيد الميلاد لكل عميل — تُستخدم فقط {name} و{phone} و{shop}. تُرسَل تلقائيًا كل صباح.',
+                    )}
+                  </p>
+                ) : null}
 
                 {customStatuses.length > 0 ? (
                   <>

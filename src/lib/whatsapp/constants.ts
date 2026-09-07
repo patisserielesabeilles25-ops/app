@@ -25,7 +25,18 @@ export const WHATSAPP_TRIGGERS: WhatsAppTrigger[] = [
   { key: 'REPORTED', en: 'Reported', ar: 'مؤجلة', emoji: '⏳' },
 ];
 
-const TRIGGER_BY_KEY = new Map(WHATSAPP_TRIGGERS.map((t) => [t.key, t]));
+/**
+ * Time/event-based triggers (not order statuses). These fire from scheduled DB
+ * jobs, not the orders trigger — e.g. a client's birthday. Automations built on
+ * them are customer-based, so only {name}, {phone} and {shop} resolve.
+ */
+export const WHATSAPP_EVENT_TRIGGERS: WhatsAppTrigger[] = [
+  { key: 'BIRTHDAY', en: 'Client birthday', ar: 'عيد ميلاد العميل', emoji: '🎂' },
+];
+
+const TRIGGER_BY_KEY = new Map(
+  [...WHATSAPP_TRIGGERS, ...WHATSAPP_EVENT_TRIGGERS].map((t) => [t.key, t]),
+);
 
 /** Localized label for a canonical trigger key (falls back to the key). */
 export function triggerLabel(locale: Locale, key: string): string {

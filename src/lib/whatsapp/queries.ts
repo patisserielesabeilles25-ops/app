@@ -16,7 +16,7 @@ export type WhatsAppConnection = {
 
 export type WhatsAppAutomation = {
   id: string;
-  trigger_type: 'canonical' | 'custom';
+  trigger_type: 'canonical' | 'custom' | 'event';
   trigger_key: string;
   message: string;
   media_url: string | null;
@@ -116,7 +116,7 @@ export async function getAutomations(locale: Locale): Promise<WhatsAppAutomation
 
   return (data ?? []).map((a) => ({
     id: a.id as string,
-    trigger_type: a.trigger_type as 'canonical' | 'custom',
+    trigger_type: a.trigger_type as 'canonical' | 'custom' | 'event',
     trigger_key: a.trigger_key as string,
     message: a.message as string,
     media_url: (a.media_url as string | null) ?? null,
