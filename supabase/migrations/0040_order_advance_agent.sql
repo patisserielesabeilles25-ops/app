@@ -102,9 +102,9 @@ begin
   -- attributed to the agent who collected it (shows in Magasin today's sales).
   if p_advance_payment > 0 then
     if p_received_by is not null then
-      select full_name into v_agent from public.employees where id = p_received_by;
+      select e.full_name into v_agent from public.employees e where e.id = p_received_by;
     end if;
-    select id into v_cat from public.financial_categories where key = 'ORDER_PAYMENT';
+    select fc.id into v_cat from public.financial_categories fc where fc.key = 'ORDER_PAYMENT';
 
     insert into public.financial_transactions
       (type, category, amount, occurred_at, source, department, category_id, order_id, employee_id, description, created_by)
