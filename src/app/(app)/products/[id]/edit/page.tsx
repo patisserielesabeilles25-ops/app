@@ -38,7 +38,7 @@ export default async function EditProductPage({
         {tr(locale, 'Back to products', 'العودة إلى المنتجات')}
       </Link>
 
-      <PageHeader title={tr(locale, 'Edit product', 'تعديل المنتج')} description={tr(locale, 'Update diameter, prices, or photo.', 'حدّث القطر أو الأسعار أو الصورة.')} />
+      <PageHeader title={tr(locale, 'Edit product', 'تعديل المنتج')} description={tr(locale, 'Update the name, diameter, or photo.', 'حدّث الاسم أو القطر أو الصورة.')} />
       <Card className="max-w-2xl">
         <CardBody>
           <ProductForm
@@ -46,8 +46,6 @@ export default async function EditProductPage({
               id: product.id,
               name: product.name,
               diameter_cm: product.diameter_cm,
-              purchase_price: product.purchase_price,
-              selling_price: product.selling_price,
             }}
             photoUrl={photoUrl}
           />

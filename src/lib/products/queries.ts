@@ -6,7 +6,7 @@ import { createServiceClient } from '@/lib/supabase/service';
 export type ProductRow = {
   id: string;
   name: string | null;
-  diameter_cm: number;
+  diameter_cm: number | null;
   purchase_price: number;
   selling_price: number;
   photo_bucket: string | null;

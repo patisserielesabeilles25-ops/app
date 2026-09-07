@@ -37,11 +37,17 @@ function Field({
   );
 }
 
-export type OrderProductOption = { id: string; name: string | null; diameter: number; price: number };
+export type OrderProductOption = { id: string; name: string | null; diameter: number | null; price: number };
 export type OrderAgentOption = { id: string; name: string };
 
 const productLabel = (p: OrderProductOption) =>
-  `${p.name || `⌀ ${p.diameter} cm`} · ⌀${p.diameter}cm · ${formatAmount(p.price)} DA`;
+  [
+    p.name || (p.diameter != null ? `⌀ ${p.diameter} cm` : 'Produit'),
+    p.diameter != null ? `⌀${p.diameter}cm` : null,
+    p.price > 0 ? `${formatAmount(p.price)} DA` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
 export function OrderForm({ products = [], agents = [] }: { products?: OrderProductOption[]; agents?: OrderAgentOption[] }) {
   const locale = useLocale();
@@ -53,13 +59,17 @@ export function OrderForm({ products = [], agents = [] }: { products?: OrderProd
   const [delivery, setDelivery] = useState(false);
   const [deliveryAmt, setDeliveryAmt] = useState('');
   const [productId, setProductId] = useState('');
+  const [cakeSize, setCakeSize] = useState('');
 
   const selectedProduct = products.find((p) => p.id === productId);
 
   const onProduct = (id: string) => {
     setProductId(id);
     const p = products.find((x) => x.id === id);
-    if (p && !total) setTotal(String(p.price)); // prefill total (only if empty)
+    if (p) {
+      if (p.diameter != null) setCakeSize(String(p.diameter)); // auto-fill size from diameter
+      if (p.price > 0 && !total) setTotal(String(p.price)); // prefill total (only if empty)
+    }
   };
 
   const remaining = Math.max(
@@ -140,7 +150,6 @@ export function OrderForm({ products = [], agents = [] }: { products?: OrderProd
           <Field
             label={tr(locale, 'Product', 'المنتج')}
             htmlFor="productId"
-            error={fe.cakeSizeCm}
             hint={products.length === 0 ? tr(locale, 'No products yet — add one in Products first.', 'لا توجد منتجات بعد — أضف منتجًا في المنتجات أولًا.') : undefined}
           >
             <select
@@ -156,19 +165,35 @@ export function OrderForm({ products = [], agents = [] }: { products?: OrderProd
                 <option key={p.id} value={p.id}>{productLabel(p)}</option>
               ))}
             </select>
-            {/* cake_size_cm is derived from the chosen product's diameter */}
-            <input type="hidden" name="cakeSizeCm" value={selectedProduct ? selectedProduct.diameter : ''} />
           </Field>
-          <Field label={tr(locale, 'Reference image', 'الصورة المرجعية')} htmlFor="image" hint={tr(locale, 'JPEG, PNG or WEBP · max 5 MB', 'JPEG أو PNG أو WEBP · بحد أقصى 5 ميغابايت')}>
+          <Field
+            label={tr(locale, 'Cake size (cm)', 'حجم الكعكة (سم)')}
+            htmlFor="cakeSizeCm"
+            error={fe.cakeSizeCm}
+            hint={selectedProduct && selectedProduct.diameter == null ? tr(locale, 'This product has no set size — enter it.', 'هذا المنتج بدون حجم محدد — أدخله.') : undefined}
+          >
             <input
-              id="image"
-              name="image"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="block w-full text-sm text-neutral-600 file:mr-3 file:rounded-lg file:border-0 file:bg-neutral-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-neutral-700 hover:file:bg-neutral-200"
+              id="cakeSizeCm"
+              name="cakeSizeCm"
+              type="number"
+              step="0.5"
+              min="0"
+              value={cakeSize}
+              onChange={(e) => setCakeSize(e.target.value)}
+              className={inputCls}
+              required
             />
           </Field>
         </div>
+        <Field label={tr(locale, 'Reference image', 'الصورة المرجعية')} htmlFor="image" hint={tr(locale, 'JPEG, PNG or WEBP · max 5 MB', 'JPEG أو PNG أو WEBP · بحد أقصى 5 ميغابايت')}>
+          <input
+            id="image"
+            name="image"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="block w-full text-sm text-neutral-600 file:mr-3 file:rounded-lg file:border-0 file:bg-neutral-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-neutral-700 hover:file:bg-neutral-200"
+          />
+        </Field>
         <Field label={tr(locale, 'Order description / details', 'وصف / تفاصيل الطلب')} htmlFor="description" error={fe.description}>
           <textarea id="description" name="description" rows={3} className={inputCls} />
         </Field>

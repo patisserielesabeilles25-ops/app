@@ -18,9 +18,7 @@ const inputCls =
 type Product = {
   id: string;
   name: string | null;
-  diameter_cm: number;
-  purchase_price: number;
-  selling_price: number;
+  diameter_cm: number | null;
 };
 
 export function ProductForm({
@@ -64,7 +62,7 @@ export function ProductForm({
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="diameterCm" className="text-sm font-medium text-neutral-700">
-          {tr(locale, 'Diameter (cm)', 'القطر (سم)')}
+          {tr(locale, 'Diameter (cm)', 'القطر (سم)')} <span className="font-normal text-neutral-400">{tr(locale, '(optional)', '(اختياري)')}</span>
         </label>
         <input
           id="diameterCm"
@@ -73,45 +71,10 @@ export function ProductForm({
           step="0.1"
           min="0"
           defaultValue={product?.diameter_cm ?? ''}
+          placeholder={tr(locale, 'Leave empty if not applicable', 'اتركه فارغًا إن لم يكن مناسبًا')}
           className={inputCls}
-          required
         />
         {fe.diameterCm ? <p className="text-xs text-amber-600">{fe.diameterCm}</p> : null}
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="purchasePrice" className="text-sm font-medium text-neutral-700">
-            {tr(locale, 'Purchase price', 'سعر الشراء')}
-          </label>
-          <input
-            id="purchasePrice"
-            name="purchasePrice"
-            type="number"
-            step="0.01"
-            min="0"
-            defaultValue={product?.purchase_price ?? ''}
-            className={inputCls}
-            required
-          />
-          {fe.purchasePrice ? <p className="text-xs text-amber-600">{fe.purchasePrice}</p> : null}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="sellingPrice" className="text-sm font-medium text-neutral-700">
-            {tr(locale, 'Selling price', 'سعر البيع')}
-          </label>
-          <input
-            id="sellingPrice"
-            name="sellingPrice"
-            type="number"
-            step="0.01"
-            min="0"
-            defaultValue={product?.selling_price ?? ''}
-            className={inputCls}
-            required
-          />
-          {fe.sellingPrice ? <p className="text-xs text-amber-600">{fe.sellingPrice}</p> : null}
-        </div>
       </div>
 
       <div className="flex flex-col gap-1.5">

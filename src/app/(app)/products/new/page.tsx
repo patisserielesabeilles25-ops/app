@@ -23,7 +23,7 @@ export default async function NewProductPage() {
         {tr(locale, 'Back to products', 'العودة إلى المنتجات')}
       </Link>
 
-      <PageHeader title={tr(locale, 'Add product', 'إضافة منتج')} description={tr(locale, 'Diameter, purchase and selling price, and a photo.', 'القطر وسعر الشراء وسعر البيع وصورة.')} />
+      <PageHeader title={tr(locale, 'Add product', 'إضافة منتج')} description={tr(locale, 'A name, an optional diameter, and a photo.', 'اسم، وقطر اختياري، وصورة.')} />
       <Card className="max-w-2xl">
         <CardBody>
           <ProductForm />

@@ -79,8 +79,9 @@ export default async function ProductsPage({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {withPhotos.map((p) => {
-            const label = p.name || `⌀ ${p.diameter_cm} cm`;
+            const label = p.name || (p.diameter_cm != null ? `⌀ ${p.diameter_cm} cm` : tr(locale, 'Product', 'منتج'));
             const margin = p.selling_price - p.purchase_price;
+            const hasPrices = p.purchase_price > 0 || p.selling_price > 0;
             return (
               <Card key={p.id} className="flex flex-col overflow-hidden">
                 <div className="relative aspect-[4/3] w-full bg-neutral-100">
@@ -95,26 +96,30 @@ export default async function ProductsPage({
                 <div className="flex flex-1 flex-col p-4">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-semibold text-neutral-800">{label}</h3>
-                    <span className="shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600">
-                      ⌀ {p.diameter_cm} cm
-                    </span>
+                    {p.diameter_cm != null ? (
+                      <span className="shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600">
+                        ⌀ {p.diameter_cm} cm
+                      </span>
+                    ) : null}
                   </div>
-                  <dl className="mt-3 space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <dt className="text-neutral-500">{tr(locale, 'Purchase price', 'سعر الشراء')}</dt>
-                      <dd className="font-medium text-neutral-700">{formatAmount(p.purchase_price)}</dd>
-                    </div>
-                    <div className="flex justify-between">
-                      <dt className="text-neutral-500">{tr(locale, 'Selling price', 'سعر البيع')}</dt>
-                      <dd className="font-medium text-neutral-700">{formatAmount(p.selling_price)}</dd>
-                    </div>
-                    <div className="flex justify-between border-t border-neutral-100 pt-1">
-                      <dt className="text-neutral-500">{tr(locale, 'Margin', 'الهامش')}</dt>
-                      <dd className={margin >= 0 ? 'font-semibold text-emerald-600' : 'font-semibold text-amber-600'}>
-                        {formatAmount(margin)}
-                      </dd>
-                    </div>
-                  </dl>
+                  {hasPrices ? (
+                    <dl className="mt-3 space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <dt className="text-neutral-500">{tr(locale, 'Purchase price', 'سعر الشراء')}</dt>
+                        <dd className="font-medium text-neutral-700">{formatAmount(p.purchase_price)}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-neutral-500">{tr(locale, 'Selling price', 'سعر البيع')}</dt>
+                        <dd className="font-medium text-neutral-700">{formatAmount(p.selling_price)}</dd>
+                      </div>
+                      <div className="flex justify-between border-t border-neutral-100 pt-1">
+                        <dt className="text-neutral-500">{tr(locale, 'Margin', 'الهامش')}</dt>
+                        <dd className={margin >= 0 ? 'font-semibold text-emerald-600' : 'font-semibold text-amber-600'}>
+                          {formatAmount(margin)}
+                        </dd>
+                      </div>
+                    </dl>
+                  ) : null}
                   {canManage ? (
                     <div className="mt-4 flex gap-2 border-t border-neutral-100 pt-3">
                       <Link
