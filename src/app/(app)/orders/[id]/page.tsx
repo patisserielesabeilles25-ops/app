@@ -340,6 +340,7 @@ export default async function OrderDetailPage({
                     orderId={order.id}
                     remaining={financials.remaining_amount}
                     kind={financials.advance_payment > 0 ? 'FINAL' : 'ADVANCE'}
+                    agents={employeeOptions}
                   />
                 ) : null}
               </CardBody>
