@@ -20,10 +20,11 @@ function daysUntil(dateStr?: string | null): number | null {
 /**
  * Maps an order's current state to one of the canonical statuses.
  *
- * REPORTED is date-driven: any order whose delivery date is more than 1 day away
- * is "scheduled" and shows REPORTED. Once 1 day or less remains it enters
- * production (EN_PREPARATION if not started yet, otherwise its real stage).
- * Delivered / returned always take precedence.
+ * REPORTED is date-driven: any order whose delivery date is 3+ days away is
+ * "scheduled" and shows REPORTED. Once 2 days or fewer remain it enters
+ * production (EN_PREPARATION if not started yet, otherwise its real stage) —
+ * matching the auto-start rule in migration 0041. Delivered / returned always
+ * take precedence.
  */
 export function orderCanonicalStatus(o: {
   production_status: ProductionStatus;
@@ -38,11 +39,11 @@ export function orderCanonicalStatus(o: {
   if (o.delivery_status === 'DELIVERED') return 'DELIVERED';
   if (o.delivery_status === 'OUT_FOR_DELIVERY') return 'READY';
 
-  // Scheduled for later → REPORTED until 1 day before delivery.
+  // Scheduled for later → REPORTED while 3+ days remain (auto-starts at 2 days).
   const days = daysUntil(o.delivery_date);
-  if (days !== null && days > 1) return 'REPORTED';
+  if (days !== null && days >= 3) return 'REPORTED';
 
-  // Within 1 day (or past): show the real production/delivery status.
+  // Within 2 days (or past): show the real production/delivery status.
   if (o.delivery_status === 'READY') return 'READY';
   let stage: CanonicalStatusKey;
   if (o.production_stage && STAGE_KEYS.includes(o.production_stage as CanonicalStatusKey)) {
