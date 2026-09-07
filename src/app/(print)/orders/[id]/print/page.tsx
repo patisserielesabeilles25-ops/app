@@ -71,7 +71,7 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
         {/* Brand header (wide banner) */}
         <div className="mb-6 border-b border-neutral-200 pb-5" dir="ltr">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/banner.png" alt="Les Abeilles — Artisanal & designed cakes" className="mx-auto h-auto w-full object-contain" />
+          <img src="/Banner.png" alt="Les Abeilles — Artisanal & designed cakes" className="mx-auto h-auto w-full object-contain" />
         </div>
 
         {/* Customer + date */}
