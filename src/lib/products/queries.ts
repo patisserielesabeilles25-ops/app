@@ -27,6 +27,7 @@ export async function getProducts({ q }: { q?: string }): Promise<ProductRow[]> 
   let query = supabase
     .from('products')
     .select(COLUMNS)
+    .eq('is_active', true)
     .order('diameter_cm', { ascending: true })
     .limit(500);
 

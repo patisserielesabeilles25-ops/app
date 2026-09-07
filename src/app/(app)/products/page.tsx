@@ -18,11 +18,11 @@ export const metadata = { title: 'Products — Nahla Cake Panel' };
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ created?: string; updated?: string; deleted?: string; error?: string }>;
+  searchParams: Promise<{ created?: string; updated?: string; deleted?: string; archived?: string; error?: string }>;
 }) {
   await requirePermission('products.view');
   const locale = await getLocale();
-  const { created, updated, deleted, error } = await searchParams;
+  const { created, updated, deleted, archived, error } = await searchParams;
   const perms = await getMyPermissions();
   const canManage = perms.has('products.manage');
 
@@ -55,6 +55,7 @@ export default async function ProductsPage({
       {created ? <Banner tone="success">{tr(locale, 'Product added.', 'تمت إضافة المنتج.')}</Banner> : null}
       {updated ? <Banner tone="success">{tr(locale, 'Product updated.', 'تم تحديث المنتج.')}</Banner> : null}
       {deleted ? <Banner tone="success">{tr(locale, 'Product deleted.', 'تم حذف المنتج.')}</Banner> : null}
+      {archived ? <Banner tone="success">{tr(locale, 'Product removed from the catalog (kept for existing orders).', 'تمت إزالة المنتج من الكتالوج (مع الاحتفاظ به للطلبات الحالية).')}</Banner> : null}
       {error ? <Banner tone="error">{error}</Banner> : null}
 
       {withPhotos.length === 0 ? (
@@ -131,7 +132,7 @@ export default async function ProductsPage({
                           </span>
                         }
                         title={tr(locale, 'Delete this product?', 'حذف هذا المنتج؟')}
-                        description={tr(locale, `"${label}" will be permanently removed.`, `سيتم حذف "${label}" نهائياً.`)}
+                        description={tr(locale, `"${label}" will be removed from the catalog. If it's used by existing orders it's kept for their history.`, `ستتم إزالة "${label}" من الكتالوج. إذا كان مستخدمًا في طلبات حالية فسيُحتفظ به لسجلّها.`)}
                         confirmLabel={tr(locale, 'Delete product', 'حذف المنتج')}
                         action={deleteProduct}
                         hiddenFields={{ productId: p.id }}

@@ -173,7 +173,27 @@ export async function updateProduct(
 export async function deleteProduct(formData: FormData): Promise<void> {
   await requirePermission('products.manage');
   const id = String(formData.get('productId') ?? '');
+  if (!id) redirect('/products');
   const supabase = await createClient();
+  const service = createServiceClient();
+
+  // Products linked to existing orders cannot be hard-deleted (FK) and shouldn't
+  // be — that would erase the product from order history and analytics. Archive
+  // them instead (hidden from the catalog and the order picker). Only truly
+  // unused products are permanently removed.
+  const { count } = await service
+    .from('orders')
+    .select('id', { count: 'exact', head: true })
+    .eq('product_id', id);
+
+  if ((count ?? 0) > 0) {
+    const { error } = await supabase.from('products').update({ is_active: false }).eq('id', id);
+    if (error) {
+      redirect(`/products?error=${encodeURIComponent('Could not archive the product.')}`);
+    }
+    revalidatePath('/products');
+    redirect('/products?archived=1');
+  }
 
   const { data: existing } = await supabase
     .from('products')
@@ -187,9 +207,7 @@ export async function deleteProduct(formData: FormData): Promise<void> {
   }
 
   if (existing?.photo_path) {
-    await createServiceClient()
-      .storage.from(existing.photo_bucket ?? BUCKET)
-      .remove([existing.photo_path]);
+    await service.storage.from(existing.photo_bucket ?? BUCKET).remove([existing.photo_path]);
   }
 
   revalidatePath('/products');
