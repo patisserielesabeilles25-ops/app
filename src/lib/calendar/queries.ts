@@ -20,6 +20,8 @@ export type CalendarOrder = {
   returned_at: string | null;
   reported_at: string | null;
   production_stage: string | null;
+  /** Reference image metadata (binary lives in Storage). Sign a URL to display. */
+  image: { bucket: string; object_path: string } | null;
 };
 
 function pad(n: number): string {
@@ -40,18 +42,27 @@ export async function getMonthOrders(
   const { data } = await supabase
     .from('orders')
     .select(
-      'id, order_number, customer_name, delivery_date, delivery_time, cake_size_cm, production_status, delivery_status, fulfillment, returned_at, reported_at, production_stage',
+      'id, order_number, customer_name, delivery_date, delivery_time, cake_size_cm, production_status, delivery_status, fulfillment, returned_at, reported_at, production_stage, order_images(bucket, object_path)',
     )
     .gte('delivery_date', start)
     .lt('delivery_date', end)
     .order('delivery_time', { ascending: true });
 
+  type Raw = Omit<CalendarOrder, 'image'> & {
+    order_images: { bucket: string; object_path: string }[] | null;
+  };
+
   const byDay = new Map<string, CalendarOrder[]>();
-  for (const row of (data ?? []) as CalendarOrder[]) {
-    const key = row.delivery_date;
+  for (const raw of (data ?? []) as unknown as Raw[]) {
+    const { order_images, ...rest } = raw;
+    const order: CalendarOrder = {
+      ...rest,
+      image: Array.isArray(order_images) ? order_images[0] ?? null : null,
+    };
+    const key = order.delivery_date;
     const list = byDay.get(key);
-    if (list) list.push(row);
-    else byDay.set(key, [row]);
+    if (list) list.push(order);
+    else byDay.set(key, [order]);
   }
   return byDay;
 }

@@ -2,9 +2,11 @@ import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { requirePermission } from '@/lib/auth/permissions';
 import { getMonthOrders } from '@/lib/calendar/queries';
+import { getSignedOrderImageUrl } from '@/lib/orders/images';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { CanonicalStatusBadge } from '@/components/ui/StatusBadge';
+import { ImageZoom } from '@/components/orders/ImageZoom';
 import { orderCanonicalStatus } from '@/lib/statuses/derive';
 import { cn, formatDate, formatTime } from '@/lib/utils';
 import { tr } from '@/lib/i18n/t';
@@ -65,6 +67,13 @@ export default async function CalendarPage({
     `/calendar?year=${y}&month=${m}${date ? `&date=${date}` : ''}`;
 
   const selectedOrders = selectedDate ? byDay.get(selectedDate) ?? [] : [];
+  // Sign reference-image URLs only for the selected day's orders.
+  const selectedWithImages = await Promise.all(
+    selectedOrders.map(async (o) => ({
+      ...o,
+      imageUrl: o.image ? await getSignedOrderImageUrl(o.image.bucket, o.image.object_path) : null,
+    })),
+  );
 
   return (
     <>
@@ -170,12 +179,13 @@ export default async function CalendarPage({
                       <th className="px-4 py-3 font-semibold">{tr(locale, 'Time', 'الوقت')}</th>
                       <th className="px-4 py-3 font-semibold">{tr(locale, 'Order', 'الطلب')}</th>
                       <th className="px-4 py-3 font-semibold">{tr(locale, 'Customer', 'العميل')}</th>
+                      <th className="px-4 py-3 font-semibold">{tr(locale, 'Image', 'الصورة')}</th>
                       <th className="px-4 py-3 font-semibold">{tr(locale, 'Size', 'الحجم')}</th>
                       <th className="px-4 py-3 font-semibold">{tr(locale, 'Status', 'الحالة')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-100">
-                    {selectedOrders.map((o) => (
+                    {selectedWithImages.map((o) => (
                       <tr key={o.id} className="hover:bg-neutral-50">
                         <td className="px-4 py-3 font-medium text-neutral-800">
                           {formatTime(o.delivery_time)}
@@ -189,6 +199,13 @@ export default async function CalendarPage({
                           </Link>
                         </td>
                         <td className="px-4 py-3 text-neutral-700">{o.customer_name}</td>
+                        <td className="px-4 py-3">
+                          {o.imageUrl ? (
+                            <ImageZoom url={o.imageUrl} />
+                          ) : (
+                            <span className="text-neutral-300">—</span>
+                          )}
+                        </td>
                         <td className="px-4 py-3 text-neutral-600">{o.cake_size_cm} cm</td>
                         <td className="px-4 py-3">
                           <CanonicalStatusBadge statusKey={orderCanonicalStatus(o)} />
