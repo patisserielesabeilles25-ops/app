@@ -38,11 +38,12 @@ function Field({
 }
 
 export type OrderProductOption = { id: string; name: string | null; diameter: number; price: number };
+export type OrderAgentOption = { id: string; name: string };
 
 const productLabel = (p: OrderProductOption) =>
   `${p.name || `⌀ ${p.diameter} cm`} · ⌀${p.diameter}cm · ${formatAmount(p.price)} DA`;
 
-export function OrderForm({ products = [] }: { products?: OrderProductOption[] }) {
+export function OrderForm({ products = [], agents = [] }: { products?: OrderProductOption[]; agents?: OrderAgentOption[] }) {
   const locale = useLocale();
   const [state, action, pending] = useActionState(createOrder, initial);
 
@@ -176,6 +177,19 @@ export function OrderForm({ products = [] }: { products?: OrderProductOption[] }
       {/* Financial */}
       <section className="space-y-4">
         <h2 className="text-sm font-semibold text-neutral-800">{tr(locale, 'Payment', 'الدفع')}</h2>
+        <Field
+          label={tr(locale, 'Agent (took the order / received the advance)', 'العون (استلم الطلب / الدفعة المقدمة)')}
+          htmlFor="receivedBy"
+          error={fe.receivedBy}
+          hint={agents.length === 0 ? tr(locale, 'No agents. Set up a user’s remuneration first.', 'لا يوجد أعوان. قم بإعداد أجر مستخدم أولًا.') : undefined}
+        >
+          <select id="receivedBy" name="receivedBy" defaultValue="" className={inputCls} required={agents.length > 0}>
+            <option value="" disabled>{tr(locale, 'Choose the agent…', 'اختر العون…')}</option>
+            {agents.map((a) => (
+              <option key={a.id} value={a.id}>{a.name}</option>
+            ))}
+          </select>
+        </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={tr(locale, 'Total amount', 'المبلغ الإجمالي')} htmlFor="totalAmount" error={fe.totalAmount}>
             <input

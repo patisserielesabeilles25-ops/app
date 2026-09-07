@@ -42,6 +42,7 @@ export async function createOrder(
     totalAmount: formData.get('totalAmount'),
     montageAmount: formData.get('montageAmount') || 0,
     advancePayment: formData.get('advancePayment') || 0,
+    receivedBy: formData.get('receivedBy') ?? '',
   });
 
   if (!parsed.success) {
@@ -92,6 +93,7 @@ export async function createOrder(
     p_advance_payment: input.advancePayment,
     p_delivery_amount: input.deliveryRequired ? input.deliveryAmount : 0,
     p_montage_amount: input.montageAmount,
+    p_received_by: input.receivedBy || null,
     p_image_bucket: imagePath ? BUCKET : null,
     p_image_path: imagePath,
     p_image_mime: hasImage ? (file as File).type : null,

@@ -29,6 +29,7 @@ export const CreateOrderSchema = z
       .max(10_000_000),
     montageAmount: z.coerce.number().min(0, 'Cannot be negative').max(10_000_000).default(0),
     advancePayment: z.coerce.number().min(0, 'Cannot be negative').max(10_000_000).default(0),
+    receivedBy: z.string().trim().optional().default(''),
   })
   .refine((d) => d.advancePayment <= d.totalAmount + d.montageAmount + d.deliveryAmount, {
     message: 'Advance cannot exceed the total amount',
