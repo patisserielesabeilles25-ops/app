@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Standalone WhatsApp worker — separate service, not part of the app.
+    "whatsapp-worker/**",
   ]),
 ]);
 

@@ -46,7 +46,10 @@ export type Permission =
   | 'payroll.pay'
   // Product catalog
   | 'products.view'
-  | 'products.manage';
+  | 'products.manage'
+  // WhatsApp automation
+  | 'whatsapp.view'
+  | 'whatsapp.manage';
 
 /**
  * Effective permission keys for the current user. Resolved via the

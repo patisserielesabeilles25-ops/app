@@ -1,0 +1,16 @@
+{
+  "name": "nahla-whatsapp-worker",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "main": "index.mjs",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.0",
+    "@supabase/supabase-js": "^2.115.0",
+    "qrcode": "^1.5.4",
+    "pino": "^9.0.0"
+  }
+}

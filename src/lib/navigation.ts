@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   ListChecks,
   Settings,
+  MessageCircle,
   type LucideIcon,
 } from 'lucide-react';
 import type { Permission } from '@/lib/auth/permissions';
@@ -49,6 +50,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: '/clients', label: 'Clients', icon: Contact, permission: 'orders.view' },
       { href: '/calendar', label: 'Calendar', icon: CalendarDays, permission: 'calendar.view' },
       { href: '/products', label: 'Products', icon: Package, permission: 'products.view' },
+      { href: '/whatsapp', label: 'WhatsApp', icon: MessageCircle, permission: 'whatsapp.view' },
     ],
   },
   {
