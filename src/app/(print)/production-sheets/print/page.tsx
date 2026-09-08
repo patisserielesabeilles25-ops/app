@@ -26,7 +26,7 @@ export default async function ProductionSheetsPrintPage() {
           <ProductionSheet title="MASQUAGE" extraSizes />
         </div>
         <div className="bg-white p-8 shadow-lg print:p-0 print:shadow-none">
-          <ProductionSheet title="COULAGE" />
+          <ProductionSheet title="PREPARATION" />
         </div>
       </div>
     </div>

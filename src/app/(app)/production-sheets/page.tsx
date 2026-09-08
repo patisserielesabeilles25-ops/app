@@ -42,9 +42,9 @@ export default async function ProductionSheetsPage() {
           </CardBody>
         </Card>
         <Card>
-          <CardHeader title="COULAGE" />
+          <CardHeader title="PREPARATION" />
           <CardBody>
-            <ProductionSheet title="COULAGE" />
+            <ProductionSheet title="PREPARATION" />
           </CardBody>
         </Card>
       </div>
