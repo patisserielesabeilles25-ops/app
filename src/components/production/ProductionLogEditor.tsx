@@ -28,27 +28,38 @@ export function ProductionLogEditor({
 }) {
   const locale = useLocale();
   const [state, action, pending] = useActionState(saveProductionLog, initialState);
-  const [vals, setVals] = useState<Record<string, number>>(initial);
+  // Track the raw text typed per cell, so "0" and empty are both allowed on any
+  // field independently (no field is ever required).
+  const [vals, setVals] = useState<Record<string, string>>(() => {
+    const m: Record<string, string> = {};
+    for (const [k, v] of Object.entries(initial)) m[k] = String(v);
+    return m;
+  });
 
   const setCell = (key: string, raw: string) => {
-    const n = Math.max(0, Math.floor(Number(raw) || 0));
+    const clean = raw.replace(/[^\d]/g, ''); // digits only; empty allowed
     setVals((v) => {
       const next = { ...v };
-      if (n > 0) next[key] = n;
-      else delete next[key];
+      if (clean === '') delete next[key];
+      else next[key] = String(parseInt(clean, 10));
       return next;
     });
+  };
+
+  const qtyOf = (key: string) => {
+    const s = vals[key];
+    return s ? parseInt(s, 10) : 0;
   };
 
   const payload = useMemo(() => JSON.stringify(vals), [vals]);
 
   const columnTotal = (sheet: SheetKey, day: number) =>
-    rowsForSheet(sheet).reduce((sum, r) => sum + (vals[cellKey(sheet, r.key, day)] ?? 0), 0);
+    rowsForSheet(sheet).reduce((sum, r) => sum + qtyOf(cellKey(sheet, r.key, day)), 0);
 
   // Daily earnings for a sheet = Σ pieces × per-piece rate.
   const dayEarnings = (sheet: SheetKey, day: number) =>
     rowsForSheet(sheet).reduce(
-      (sum, r) => sum + (vals[cellKey(sheet, r.key, day)] ?? 0) * pieceRate(sheet, r.key),
+      (sum, r) => sum + qtyOf(cellKey(sheet, r.key, day)) * pieceRate(sheet, r.key),
       0,
     );
   const weekEarnings = (sheet: SheetKey) =>
