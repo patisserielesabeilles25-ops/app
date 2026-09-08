@@ -51,11 +51,12 @@ export function orderCanonicalStatus(o: {
   } else if (o.production_status === 'READY') {
     stage = 'READY';
   } else if (o.production_status === 'IN_PRODUCTION') {
-    stage = 'EN_PREPARATION';
+    stage = 'EN_MASKAGE';
   } else {
     stage = 'NOUVEAU';
   }
-  // A not-yet-started order that is now due → time to prepare.
-  if (stage === 'NOUVEAU') return 'EN_PREPARATION';
+  // A not-yet-started order that is now due → production begins at Maskage
+  // (Preparation is auto-passed).
+  if (stage === 'NOUVEAU') return 'EN_MASKAGE';
   return stage;
 }
