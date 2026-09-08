@@ -26,7 +26,7 @@ export type RowDef = {
 
 export const ROWS: RowDef[] = [
   { key: '10_13', label: '10 / 13', ltr: true },
-  { key: 'mini', label: 'Mini Cake', ltr: true, masquageOnly: true },
+  { key: 'mini', label: 'Mini Cake', ltr: true },
   { key: 'ital_1_4', label: 'Italian 1/4', ltr: true, masquageOnly: true },
   { key: '15_18', label: '15 / 18', ltr: true },
   { key: '25_30', label: '25 / 30', ltr: true },
