@@ -150,7 +150,11 @@ export async function sendToLab(formData: FormData): Promise<void> {
   redirect(`/orders/${id}?sent=1`);
 }
 
-/** Start production on an order (NOUVEAU -> EN_PREPARATION). */
+/**
+ * Start production on an order (NOUVEAU -> EN_PREPARATION) and immediately
+ * auto-complete the Preparation stage — so production advances straight to
+ * EN_MASKAGE — crediting it to the user who clicked Start (users are agents).
+ */
 export async function startProduction(formData: FormData): Promise<void> {
   await requirePermission('orders.edit');
   const id = String(formData.get('orderId') ?? '');
@@ -160,6 +164,18 @@ export async function startProduction(formData: FormData): Promise<void> {
   if (error) {
     redirect(`/orders/${id}?error=${encodeURIComponent('Could not start production.')}`);
   }
+
+  // Auto-record the Preparation stage as done, attributed to the current user.
+  const { data: auth } = await supabase.auth.getUser();
+  const employeeId = auth.user ? await ensureAgentEmployeeId(auth.user.id) : null;
+  if (employeeId) {
+    await supabase.rpc('complete_order_stage', {
+      p_order_id: id,
+      p_stage: 'PREPARATION',
+      p_employee_id: employeeId,
+    });
+  }
+
   revalidateOrderViews(id);
   redirect(fromList ? '/orders' : `/orders/${id}?sent=1`);
 }
