@@ -21,7 +21,21 @@ const ROWS: { label: string; sep?: boolean; ltr?: boolean }[] = [
 
 const cell = 'border border-neutral-900 text-center align-middle';
 
-export function ProductionSheet({ title }: { title: string }) {
+// Extra size rows for the masking sheet, inserted right after "10 / 13".
+const EXTRA_AFTER_FIRST: { label: string; sep?: boolean; ltr?: boolean }[] = [
+  { label: 'Mini Cake', ltr: true },
+  { label: 'Italian 1/4', ltr: true },
+];
+
+export function ProductionSheet({
+  title,
+  extraSizes = false,
+}: {
+  title: string;
+  /** Insert the "Mini Cake" and "Italian 1/4" rows after "10 / 13". */
+  extraSizes?: boolean;
+}) {
+  const rows = extraSizes ? [ROWS[0], ...EXTRA_AFTER_FIRST, ...ROWS.slice(1)] : ROWS;
   return (
     <div dir="rtl" className="w-full text-neutral-900">
       {/* Worker / period header lines */}
@@ -47,7 +61,7 @@ export function ProductionSheet({ title }: { title: string }) {
           </tr>
         </thead>
         <tbody>
-          {ROWS.map((r) => (
+          {rows.map((r) => (
             <tr key={r.label}>
               <th
                 dir={r.ltr ? 'ltr' : undefined}

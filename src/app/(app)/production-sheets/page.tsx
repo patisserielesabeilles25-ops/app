@@ -38,7 +38,7 @@ export default async function ProductionSheetsPage() {
         <Card>
           <CardHeader title="MASQUAGE" description={tr(locale, 'Masking — one worker per sheet', 'التغطية — عامل واحد لكل ورقة')} />
           <CardBody>
-            <ProductionSheet title="MASQUAGE" />
+            <ProductionSheet title="MASQUAGE" extraSizes />
           </CardBody>
         </Card>
         <Card>

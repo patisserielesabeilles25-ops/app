@@ -23,7 +23,7 @@ export default async function ProductionSheetsPrintPage() {
 
       <div className="mx-auto max-w-[820px] space-y-8">
         <div className="sheet-break bg-white p-8 shadow-lg print:p-0 print:shadow-none">
-          <ProductionSheet title="MASQUAGE" />
+          <ProductionSheet title="MASQUAGE" extraSizes />
         </div>
         <div className="bg-white p-8 shadow-lg print:p-0 print:shadow-none">
           <ProductionSheet title="COULAGE" />
