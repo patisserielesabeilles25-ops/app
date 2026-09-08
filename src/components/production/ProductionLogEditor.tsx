@@ -37,9 +37,7 @@ export function ProductionLogEditor({
   const payload = useMemo(() => JSON.stringify(vals), [vals]);
 
   const columnTotal = (sheet: SheetKey, day: number) =>
-    rowsForSheet(sheet)
-      .filter((r) => !r.sep)
-      .reduce((sum, r) => sum + (vals[cellKey(sheet, r.key, day)] ?? 0), 0);
+    rowsForSheet(sheet).reduce((sum, r) => sum + (vals[cellKey(sheet, r.key, day)] ?? 0), 0);
 
   return (
     <form action={action} className="space-y-6">
@@ -77,44 +75,33 @@ export function ProductionLogEditor({
                     </tr>
                   </thead>
                   <tbody>
-                    {rowsForSheet(sheet).map((r) =>
-                      r.sep ? (
-                        <tr key={r.key}>
-                          <th
-                            dir={r.ltr ? 'ltr' : undefined}
-                            className={`${cellBorder} bg-neutral-100 px-2 py-2 font-bold`}
-                            style={{ printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
-                          >
-                            {r.label}
-                          </th>
-                          {DAYS.map((d) => (
-                            <td key={d.index} className={`${cellBorder} bg-neutral-50`} />
-                          ))}
-                        </tr>
-                      ) : (
-                        <tr key={r.key}>
-                          <th dir={r.ltr ? 'ltr' : undefined} className={`${cellBorder} px-2 py-2 font-bold`}>
-                            {r.label}
-                          </th>
-                          {DAYS.map((d) => {
-                            const key = cellKey(sheet, r.key, d.index);
-                            return (
-                              <td key={d.index} className={cellBorder}>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="1"
-                                  inputMode="numeric"
-                                  value={vals[key] ?? ''}
-                                  onChange={(e) => setCell(key, e.target.value)}
-                                  className="h-10 w-full min-w-12 bg-transparent text-center outline-none focus:bg-amber-50"
-                                />
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ),
-                    )}
+                    {rowsForSheet(sheet).map((r) => (
+                      <tr key={r.key}>
+                        <th
+                          dir={r.ltr ? 'ltr' : undefined}
+                          className={`${cellBorder} px-2 py-2 font-bold ${r.sep ? 'bg-neutral-100' : ''}`}
+                          style={r.sep ? { printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' } : undefined}
+                        >
+                          {r.label}
+                        </th>
+                        {DAYS.map((d) => {
+                          const key = cellKey(sheet, r.key, d.index);
+                          return (
+                            <td key={d.index} className={cellBorder}>
+                              <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                inputMode="numeric"
+                                value={vals[key] ?? ''}
+                                onChange={(e) => setCell(key, e.target.value)}
+                                className="h-10 w-full min-w-12 bg-transparent text-center outline-none focus:bg-amber-50"
+                              />
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
                     <tr>
                       <th
                         className={`${cellBorder} bg-neutral-100 px-2 py-2 font-extrabold`}
