@@ -9,29 +9,29 @@ import type { SheetKey } from './rows';
  */
 export const PIECE_RATES: Record<SheetKey, Record<string, number>> = {
   MASQUAGE: {
-    '10_13': 0,
-    mini: 0,
-    ital_1_4: 0,
-    '15_18': 0,
-    '25_30': 0,
-    '30_plus': 0,
-    plateau: 0,
-    '3_4p': 0, // "PLATEAU M"
-    '1_2p': 0,
-    '1_4p': 0,
-    '1_6p': 0,
+    '10_13': 100,
+    mini: 50,
+    ital_1_4: 250,
+    '15_18': 200,
+    '25_30': 300,
+    '30_plus': 400,
+    plateau: 500,
+    '3_4p': 350, // "PLATEAU M"
+    '1_2p': 250,
+    '1_4p': 150,
+    '1_6p': 100,
   },
   PREPARATION: {
-    '10_13': 0,
-    mini: 0,
-    '15_18': 0,
-    '25_30': 0,
-    '30_plus': 0,
-    plateau: 0,
-    '3_4p': 0, // "PLATEAU M"
-    '1_2p': 0,
-    '1_4p': 0,
-    '1_6p': 0,
+    '10_13': 60,
+    mini: 30,
+    '15_18': 100,
+    '25_30': 200,
+    '30_plus': 300,
+    plateau: 300,
+    '3_4p': 150, // "PLATEAU M"
+    '1_2p': 150,
+    '1_4p': 100,
+    '1_6p': 50,
   },
 };
 
