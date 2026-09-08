@@ -36,13 +36,13 @@ export default async function ProductionSheetsPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader title="MASQUAGE" description={tr(locale, 'Masking — one worker per sheet', 'التغطية — عامل واحد لكل ورقة')} />
+          <CardHeader title="MASQUAGE" />
           <CardBody>
             <ProductionSheet title="MASQUAGE" extraSizes />
           </CardBody>
         </Card>
         <Card>
-          <CardHeader title="COULAGE" description={tr(locale, 'Casting — one worker per sheet', 'الصب — عامل واحد لكل ورقة')} />
+          <CardHeader title="COULAGE" />
           <CardBody>
             <ProductionSheet title="COULAGE" />
           </CardBody>
