@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { requirePermission } from '@/lib/auth/permissions';
 import { getProducts } from '@/lib/products/queries';
-import { getEmployees } from '@/lib/payroll/queries';
+import { getAgents } from '@/lib/agents/queries';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardBody } from '@/components/ui/Card';
 import { OrderForm } from '@/components/orders/OrderForm';
@@ -14,16 +14,13 @@ export const metadata = { title: 'Nouvelle commande — Nahla Cake Panel' };
 export default async function NewOrderPage() {
   await requirePermission('orders.create');
   const locale = await getLocale();
-  const [products, employees] = await Promise.all([getProducts({}), getEmployees()]);
+  const [products, agentOptions] = await Promise.all([getProducts({}), getAgents()]);
   const productOptions = products.map((p) => ({
     id: p.id,
     name: p.name,
     diameter: p.diameter_cm,
     price: p.selling_price,
   }));
-  const agentOptions = employees
-    .filter((e) => e.is_active)
-    .map((e) => ({ id: e.id, name: e.full_name }));
   return (
     <>
       <Link

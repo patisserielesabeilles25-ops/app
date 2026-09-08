@@ -18,6 +18,7 @@ export type OrderDefaults = {
   customerPhone: string;
   cakeSizeCm: number;
   description: string;
+  fourage: string;
   deliveryDate: string;
   deliveryTime: string;
   deliveryRequired: boolean;
@@ -125,6 +126,9 @@ export function EditOrderForm({
         <h2 className="text-sm font-semibold text-neutral-800">{tr(locale, 'Cake', 'الكعكة')}</h2>
         <Field label={tr(locale, 'Size (cm)', 'الحجم (سم)')} htmlFor="cakeSizeCm" error={fe.cakeSizeCm}>
           <input id="cakeSizeCm" name="cakeSizeCm" type="number" step="0.5" min="0" defaultValue={defaults.cakeSizeCm} className={inputCls} required />
+        </Field>
+        <Field label={tr(locale, 'Fourrage (extra / modified ingredient)', 'الحشوة (مكوّن إضافي / تعديل)')} htmlFor="fourage" error={fe.fourage}>
+          <input id="fourage" name="fourage" defaultValue={defaults.fourage} className={inputCls} placeholder={tr(locale, 'e.g. extra chocolate filling, no nuts…', 'مثال: حشوة شوكولاتة إضافية، بدون مكسرات…')} />
         </Field>
         <Field label={tr(locale, 'Order description / details', 'وصف / تفاصيل الطلب')} htmlFor="description" error={fe.description}>
           <textarea id="description" name="description" rows={3} defaultValue={defaults.description} className={inputCls} />

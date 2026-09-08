@@ -194,6 +194,18 @@ export function OrderForm({ products = [], agents = [] }: { products?: OrderProd
             className="block w-full text-sm text-neutral-600 file:mr-3 file:rounded-lg file:border-0 file:bg-neutral-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-neutral-700 hover:file:bg-neutral-200"
           />
         </Field>
+        <Field
+          label={tr(locale, 'Fourrage (extra / modified ingredient)', 'الحشوة (مكوّن إضافي / تعديل)')}
+          htmlFor="fourage"
+          error={fe.fourage}
+          hint={tr(
+            locale,
+            'Fill this only if the customer wants an added or changed ingredient — the order is then flagged NEW (red).',
+            'املأ هذا فقط إذا أراد العميل مكوّنًا إضافيًا أو معدّلًا — عندها يُوسم الطلب بعلامة NEW (أحمر).',
+          )}
+        >
+          <input id="fourage" name="fourage" className={inputCls} placeholder={tr(locale, 'e.g. extra chocolate filling, no nuts…', 'مثال: حشوة شوكولاتة إضافية، بدون مكسرات…')} />
+        </Field>
         <Field label={tr(locale, 'Order description / details', 'وصف / تفاصيل الطلب')} htmlFor="description" error={fe.description}>
           <textarea id="description" name="description" rows={3} className={inputCls} />
         </Field>
@@ -206,7 +218,7 @@ export function OrderForm({ products = [], agents = [] }: { products?: OrderProd
           label={tr(locale, 'Agent (took the order / received the advance)', 'العون (استلم الطلب / الدفعة المقدمة)')}
           htmlFor="receivedBy"
           error={fe.receivedBy}
-          hint={agents.length === 0 ? tr(locale, 'No agents. Set up a user’s remuneration first.', 'لا يوجد أعوان. قم بإعداد أجر مستخدم أولًا.') : undefined}
+          hint={agents.length === 0 ? tr(locale, 'No active users found. Add a user first.', 'لا يوجد مستخدمون نشطون. أضف مستخدمًا أولًا.') : undefined}
         >
           <select id="receivedBy" name="receivedBy" defaultValue="" className={inputCls} required={agents.length > 0}>
             <option value="" disabled>{tr(locale, 'Choose the agent…', 'اختر العون…')}</option>

@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { requirePermission, getMyPermissions } from '@/lib/auth/permissions';
+import { ensureAgentEmployeeId } from '@/lib/agents/resolve';
 import {
   CreateOrderSchema,
   OperationalOrderSchema,
@@ -35,6 +36,7 @@ export async function createOrder(
     customerPhone: formData.get('customerPhone'),
     cakeSizeCm: formData.get('cakeSizeCm'),
     description: formData.get('description') ?? '',
+    fourage: formData.get('fourage') ?? '',
     deliveryDate: formData.get('deliveryDate'),
     deliveryTime: formData.get('deliveryTime'),
     deliveryRequired: formData.get('deliveryRequired') === 'on',
@@ -78,6 +80,10 @@ export async function createOrder(
     imagePath = path;
   }
 
+  // The chosen agent is an app user; resolve (create on first use) the backing
+  // employee so the advance is attributed in Magasin "Today's sales".
+  const receivedByEmployee = await ensureAgentEmployeeId(input.receivedBy);
+
   // Atomic create via SECURITY DEFINER function (as the signed-in user).
   const supabase = await createClient();
   const { data, error } = await supabase.rpc('create_order', {
@@ -93,7 +99,7 @@ export async function createOrder(
     p_advance_payment: input.advancePayment,
     p_delivery_amount: input.deliveryRequired ? input.deliveryAmount : 0,
     p_montage_amount: input.montageAmount,
-    p_received_by: input.receivedBy || null,
+    p_received_by: receivedByEmployee,
     p_image_bucket: imagePath ? BUCKET : null,
     p_image_path: imagePath,
     p_image_mime: hasImage ? (file as File).type : null,
@@ -110,11 +116,14 @@ export async function createOrder(
 
   const created = Array.isArray(data) ? data[0] : undefined;
 
-  // Link the chosen catalog product to the order (service client: the caller
-  // passed orders.create, but the update policy needs orders.edit).
+  // Link the chosen catalog product + store the fourage note (service client:
+  // the caller passed orders.create, but the update policy needs orders.edit).
   const productId = String(formData.get('productId') ?? '');
-  if (created?.id && productId) {
-    await createServiceClient().from('orders').update({ product_id: productId }).eq('id', created.id);
+  const patch: { product_id?: string; fourage?: string | null } = {};
+  if (productId) patch.product_id = productId;
+  if (input.fourage) patch.fourage = input.fourage;
+  if (created?.id && Object.keys(patch).length > 0) {
+    await createServiceClient().from('orders').update(patch).eq('id', created.id);
   }
 
   redirect(created?.id ? `/orders/${created.id}?created=1` : '/orders');
@@ -160,10 +169,15 @@ export async function completeStage(formData: FormData): Promise<void> {
   await requirePermission('production.update');
   const id = String(formData.get('orderId') ?? '');
   const stage = String(formData.get('stage') ?? '');
-  const employeeId = String(formData.get('employeeId') ?? '');
+  const agentProfileId = String(formData.get('employeeId') ?? '');
   const fromList = String(formData.get('from') ?? '') === 'list';
+  if (!agentProfileId) {
+    redirect(`/orders/${id}?error=${encodeURIComponent('Choisissez l’agent qui a fait cette étape.')}`);
+  }
+  // The picked agent is an app user; resolve (create on first use) their employee.
+  const employeeId = await ensureAgentEmployeeId(agentProfileId);
   if (!employeeId) {
-    redirect(`/orders/${id}?error=${encodeURIComponent('Choisissez l’employé qui a fait cette étape.')}`);
+    redirect(`/orders/${id}?error=${encodeURIComponent('Could not resolve the agent.')}`);
   }
   const supabase = await createClient();
   const { error } = await supabase.rpc('complete_order_stage', {
@@ -369,6 +383,7 @@ export async function updateOrder(
     customerPhone: formData.get('customerPhone'),
     cakeSizeCm: formData.get('cakeSizeCm'),
     description: formData.get('description') ?? '',
+    fourage: formData.get('fourage') ?? '',
     deliveryDate: formData.get('deliveryDate'),
     deliveryTime: formData.get('deliveryTime'),
     deliveryRequired: formData.get('deliveryRequired') === 'on',
@@ -391,6 +406,7 @@ export async function updateOrder(
       customer_phone: input.customerPhone,
       cake_size_cm: input.cakeSizeCm,
       description: input.description,
+      fourage: input.fourage || null,
       delivery_date: input.deliveryDate,
       delivery_time: input.deliveryTime,
       delivery_required: input.deliveryRequired,
@@ -451,12 +467,15 @@ export async function recordOrderPayment(
 
   if (!(amount > 0)) return { error: 'Enter a valid amount.' };
 
+  // The picked agent is an app user; resolve their backing employee.
+  const receivedByEmployee = await ensureAgentEmployeeId(receivedBy);
+
   const supabase = await createClient();
   const { error } = await supabase.rpc('record_order_payment', {
     p_order_id: orderId,
     p_amount: amount,
     p_kind: kind,
-    p_received_by: receivedBy || null,
+    p_received_by: receivedByEmployee,
   });
   if (error) {
     return { error: /exceeds/.test(error.message) ? 'Payment exceeds the remaining amount.' : 'Could not record the payment.' };

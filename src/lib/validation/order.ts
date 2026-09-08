@@ -17,6 +17,7 @@ export const CreateOrderSchema = z
       .positive('Size must be greater than 0')
       .max(1000, 'Size looks too large'),
     description: z.string().trim().max(2000).optional().default(''),
+    fourage: z.string().trim().max(500).optional().default(''),
     deliveryDate: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Choose a delivery date'),
@@ -47,6 +48,7 @@ export const OperationalOrderSchema = z.object({
     .positive('Size must be greater than 0')
     .max(1000, 'Size looks too large'),
   description: z.string().trim().max(2000).optional().default(''),
+  fourage: z.string().trim().max(500).optional().default(''),
   deliveryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Choose a delivery date'),
   deliveryTime: z.string().regex(/^\d{2}:\d{2}$/, 'Choose a delivery time'),
   deliveryRequired: z.boolean().default(false),

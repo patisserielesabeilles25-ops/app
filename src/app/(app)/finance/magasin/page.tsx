@@ -2,7 +2,7 @@ import { Store, CheckCircle2 } from 'lucide-react';
 import { requirePermission, getMyPermissions } from '@/lib/auth/permissions';
 import { getMagasinDay } from '@/lib/magasin/queries';
 import { getProducts } from '@/lib/products/queries';
-import { getEmployees } from '@/lib/payroll/queries';
+import { getAgents } from '@/lib/agents/queries';
 import { getCategories } from '@/lib/finance/config';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
@@ -37,11 +37,11 @@ export default async function MagasinPage({
   const canSale = perms.has('magasin.sale.create');
   const canExpense = perms.has('magasin.expense.create');
 
-  const [day, products, categories, employees] = await Promise.all([
+  const [day, products, categories, agentOptions] = await Promise.all([
     getMagasinDay(selected),
     getProducts({}),
     getCategories(),
-    canSale || canExpense ? getEmployees() : Promise.resolve([]),
+    canSale || canExpense ? getAgents() : Promise.resolve([]),
   ]);
   const productOptions = products.map((p) => ({
     id: p.id,
@@ -52,7 +52,6 @@ export default async function MagasinPage({
   const expenseCategories = categories
     .filter((c) => (c.direction === 'EXPENSE' || c.direction === 'BOTH') && c.is_active)
     .map((c) => ({ id: c.id, name: c.name }));
-  const agentOptions = employees.filter((e) => e.is_active).map((e) => ({ id: e.id, name: e.full_name }));
 
   return (
     <>

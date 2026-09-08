@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ShoppingCart, Plus, ClipboardList, CheckCircle2, Printer, Phone, MessageCircle, Pencil } from 'lucide-react';
 import { requirePermission, getMyPermissions } from '@/lib/auth/permissions';
 import { getOrders, getOrderStatusCounts } from '@/lib/orders/queries';
-import { getEmployees } from '@/lib/payroll/queries';
+import { getAgents } from '@/lib/agents/queries';
 import { OrderStageAdvance } from '@/components/orders/OrderStageAdvance';
 import { ImageZoom } from '@/components/orders/ImageZoom';
 import { OrderPayDialog } from '@/components/orders/OrderPayDialog';
@@ -43,12 +43,11 @@ export default async function OrdersPage({
   const canRecordPayment = perms.has('finance.income.create');
   const canViewFinance = perms.has('finance.view') || perms.has('finance.transactions.view');
 
-  const [orders, counts, employees] = await Promise.all([
+  const [orders, counts, employeeOptions] = await Promise.all([
     getOrders({ q, status, withBalances: canViewFinance || canRecordPayment }),
     getOrderStatusCounts(),
-    canProduce || canRecordPayment ? getEmployees() : Promise.resolve([]),
+    canProduce || canRecordPayment ? getAgents() : Promise.resolve([]),
   ]);
-  const employeeOptions = employees.filter((e) => e.is_active).map((e) => ({ id: e.id, name: e.full_name }));
   const toolbarOrders = orders.map((o) => ({
     id: o.id,
     order_number: o.order_number,
@@ -195,6 +194,14 @@ export default async function OrdersPage({
                     <div className="flex items-center gap-2 whitespace-nowrap">
                       <span className="text-neutral-800">{o.customer_name}</span>
                       <ClientBadges delivered={o.client_delivered} returned={o.client_returned} locale={locale} />
+                      {o.fourage ? (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-red-600"
+                          title={`${tr(locale, 'Fourrage', 'الحشوة')}: ${o.fourage}`}
+                        >
+                          {tr(locale, 'NEW', 'جديد')}
+                        </span>
+                      ) : null}
                     </div>
                     <div className="flex items-center gap-2 text-xs text-neutral-400">
                       <span>{o.customer_phone}</span>

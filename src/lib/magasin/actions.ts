@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { requirePermission } from '@/lib/auth/permissions';
+import { ensureAgentEmployeeId } from '@/lib/agents/resolve';
 import { ACCEPTED_FINANCE_TYPES, MAX_FINANCE_BYTES } from '@/lib/validation/finance';
 
 export type MagasinState = { error?: string };
@@ -17,7 +18,7 @@ export async function recordMagasinSale(
   await requirePermission('magasin.sale.create');
 
   const saleDate = String(formData.get('saleDate') || '');
-  const agent = String(formData.get('agent') || '') || null;
+  const agent = await ensureAgentEmployeeId(String(formData.get('agent') || ''));
   const names = formData.getAll('product_name').map(String);
   const qtys = formData.getAll('quantity').map((v) => Number(v));
   const prices = formData.getAll('unit_price').map((v) => Number(v));
@@ -57,7 +58,7 @@ export async function recordMagasinExpense(
   const amount = Number(formData.get('amount'));
   const categoryId = String(formData.get('categoryId') || '') || null;
   const description = String(formData.get('description') || '');
-  const agent = String(formData.get('agent') || '') || null;
+  const agent = await ensureAgentEmployeeId(String(formData.get('agent') || ''));
 
   if (!(amount > 0)) return { error: 'Enter a valid amount.' };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: 'Choose a valid date.' };

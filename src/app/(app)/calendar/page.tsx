@@ -126,28 +126,40 @@ export default async function CalendarPage({
               const orders = byDay.get(key) ?? [];
               const isToday = key === todayKey;
               const isSelected = key === selectedDate;
+              // Any order with a fourrage (added/modified ingredient) turns the whole day red.
+              const hasFourage = orders.some((o) => o.fourage);
               return (
                 <Link
                   key={key}
                   href={base(year, month, key)}
                   scroll={false}
+                  title={hasFourage ? tr(locale, 'Has an order with ingredient changes', 'يوجد طلب بتعديلات على المكوّنات') : undefined}
                   className={cn(
                     'flex min-h-16 flex-col rounded-lg border p-1.5 transition sm:min-h-20',
-                    isSelected
-                      ? 'border-amber-400 bg-amber-50'
-                      : 'border-neutral-200 hover:border-amber-300 hover:bg-neutral-50',
+                    isSelected && hasFourage
+                      ? 'border-red-500 bg-red-50 ring-1 ring-red-300'
+                      : isSelected
+                        ? 'border-amber-400 bg-amber-50'
+                        : hasFourage
+                          ? 'border-red-300 bg-red-50 hover:border-red-400'
+                          : 'border-neutral-200 hover:border-amber-300 hover:bg-neutral-50',
                   )}
                 >
                   <span
                     className={cn(
                       'inline-flex h-6 w-6 items-center justify-center rounded-full text-xs',
-                      isToday ? 'bg-amber-400 font-semibold text-neutral-900' : 'text-neutral-600',
+                      isToday ? 'bg-amber-400 font-semibold text-neutral-900' : hasFourage ? 'font-semibold text-red-600' : 'text-neutral-600',
                     )}
                   >
                     {day}
                   </span>
                   {orders.length > 0 ? (
-                    <span className="mt-auto inline-flex items-center gap-1 self-start rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
+                    <span
+                      className={cn(
+                        'mt-auto inline-flex items-center gap-1 self-start rounded-full px-1.5 py-0.5 text-[10px] font-semibold',
+                        hasFourage ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700',
+                      )}
+                    >
                       {tr(locale, `${orders.length} order${orders.length > 1 ? 's' : ''}`, `${orders.length} طلب`)}
                     </span>
                   ) : null}
@@ -191,12 +203,22 @@ export default async function CalendarPage({
                           {formatTime(o.delivery_time)}
                         </td>
                         <td className="px-4 py-3">
-                          <Link
-                            href={`/orders/${o.id}`}
-                            className="font-medium text-amber-600 hover:underline"
-                          >
-                            {o.order_number}
-                          </Link>
+                          <div className="flex items-center gap-2">
+                            <Link
+                              href={`/orders/${o.id}`}
+                              className="font-medium text-amber-600 hover:underline"
+                            >
+                              {o.order_number}
+                            </Link>
+                            {o.fourage ? (
+                              <span
+                                className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-red-600"
+                                title={`${tr(locale, 'Fourrage', 'الحشوة')}: ${o.fourage}`}
+                              >
+                                {tr(locale, 'NEW', 'جديد')}
+                              </span>
+                            ) : null}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-neutral-700">{o.customer_name}</td>
                         <td className="px-4 py-3">

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Pencil, Send, Trash2, ArrowLeft, CheckCircle2, AlertTriangle, PackageX, Undo2, Truck, Printer } from 'lucide-react';
 import { requirePermission, getMyPermissions } from '@/lib/auth/permissions';
 import { getOrderDetail, getOrderStatusHistory, getOrderStages } from '@/lib/orders/queries';
-import { getEmployees } from '@/lib/payroll/queries';
+import { getAgents } from '@/lib/agents/queries';
 import { getSignedOrderImageUrl } from '@/lib/orders/images';
 import { startProduction, markOutForDelivery, markDelivered, deleteOrder, markOrderReturned, unmarkOrderReturned, unreportOrder } from '@/lib/orders/actions';
 import { PaymentForm } from '@/components/orders/PaymentForm';
@@ -73,12 +73,11 @@ export default async function OrderDetailPage({
   const { order, financials, image } = await getOrderDetail(id);
   if (!order) notFound();
 
-  const [history, stages, employees] = await Promise.all([
+  const [history, stages, employeeOptions] = await Promise.all([
     getOrderStatusHistory(id),
     getOrderStages(id),
-    getEmployees(),
+    getAgents(),
   ]);
-  const employeeOptions = employees.filter((e) => e.is_active).map((e) => ({ id: e.id, name: e.full_name }));
   const stageDoneBy = new Map(stages.map((s) => [s.stage, s.employee_name]));
   const currentStage =
     order.production_stage === 'EN_PREPARATION' ? 'PREPARATION' :
@@ -287,6 +286,12 @@ export default async function OrderDetailPage({
                 <Row label={tr(locale, 'Cake size', 'حجم الكعكة')} value={`${order.cake_size_cm} cm`} />
                 <Row label={tr(locale, 'Delivery date', 'تاريخ التوصيل')} value={formatDate(order.delivery_date)} />
                 <Row label={tr(locale, 'Delivery time', 'وقت التوصيل')} value={formatTime(order.delivery_time)} />
+                {order.fourage ? (
+                  <Row
+                    label={tr(locale, 'Fourrage', 'الحشوة')}
+                    value={<span className="font-semibold text-red-600">{order.fourage}</span>}
+                  />
+                ) : null}
                 <Row
                   label={tr(locale, 'Description', 'الوصف')}
                   value={order.description ? order.description : '—'}

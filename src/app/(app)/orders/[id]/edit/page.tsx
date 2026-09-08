@@ -39,6 +39,7 @@ export default async function EditOrderPage({
               customerPhone: order.customer_phone,
               cakeSizeCm: order.cake_size_cm,
               description: order.description ?? '',
+              fourage: order.fourage ?? '',
               deliveryDate: order.delivery_date,
               deliveryTime: order.delivery_time.slice(0, 5),
               deliveryRequired: order.delivery_required,
