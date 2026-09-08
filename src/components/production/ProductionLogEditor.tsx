@@ -5,8 +5,10 @@ import { useActionState } from 'react';
 import { CheckCircle2, Save } from 'lucide-react';
 import { saveProductionLog, type SaveLogState } from '@/lib/production/actions';
 import { DAYS, SHEETS, rowsForSheet, cellKey, type SheetKey } from '@/lib/production/rows';
+import { pieceRate } from '@/lib/production/rates';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
+import { formatAmount } from '@/lib/utils';
 import { useLocale } from '@/lib/i18n/LocaleProvider';
 import { tr } from '@/lib/i18n/t';
 
@@ -38,6 +40,16 @@ export function ProductionLogEditor({
 
   const columnTotal = (sheet: SheetKey, day: number) =>
     rowsForSheet(sheet).reduce((sum, r) => sum + (vals[cellKey(sheet, r.key, day)] ?? 0), 0);
+
+  // Daily earnings for a sheet = Σ pieces × per-piece rate.
+  const dayEarnings = (sheet: SheetKey, day: number) =>
+    rowsForSheet(sheet).reduce(
+      (sum, r) => sum + (vals[cellKey(sheet, r.key, day)] ?? 0) * pieceRate(sheet, r.key),
+      0,
+    );
+  const weekEarnings = (sheet: SheetKey) =>
+    DAYS.reduce((sum, d) => sum + dayEarnings(sheet, d.index), 0);
+  const grandTotal = SHEETS.reduce((sum, s) => sum + weekEarnings(s), 0);
 
   return (
     <form action={action} className="space-y-6">
@@ -119,12 +131,38 @@ export function ProductionLogEditor({
                         </td>
                       ))}
                     </tr>
+                    <tr>
+                      <th
+                        className={`${cellBorder} bg-amber-100 px-2 py-2 font-extrabold text-amber-800`}
+                        style={{ printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
+                      >
+                        المكسب (دج)
+                      </th>
+                      {DAYS.map((d) => (
+                        <td
+                          key={d.index}
+                          className={`${cellBorder} bg-amber-50 px-1 py-2 text-xs font-bold text-amber-800`}
+                          style={{ printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
+                        >
+                          {dayEarnings(sheet, d.index) ? formatAmount(dayEarnings(sheet, d.index)) : ''}
+                        </td>
+                      ))}
+                    </tr>
                   </tbody>
                 </table>
+              </div>
+              <div className="mt-3 flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2 text-sm">
+                <span className="font-medium text-amber-800">{tr(locale, 'Weekly earnings', 'مكسب الأسبوع')}</span>
+                <span className="font-bold text-amber-800">{formatAmount(weekEarnings(sheet))} DA</span>
               </div>
             </CardBody>
           </Card>
         ))}
+      </div>
+
+      <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+        <span className="text-sm font-semibold text-amber-900">{tr(locale, 'Total earnings this week', 'إجمالي مكسب هذا الأسبوع')}</span>
+        <span className="text-lg font-bold text-amber-900">{formatAmount(grandTotal)} DA</span>
       </div>
 
       <div className="flex justify-end">
