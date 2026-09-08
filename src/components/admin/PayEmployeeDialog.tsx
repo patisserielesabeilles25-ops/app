@@ -69,6 +69,12 @@ export function PayEmployeeDialog({ info }: { info: PayInfo }) {
                 <span className="text-neutral-500">{tr(locale, 'Déjà payé', 'المدفوع مسبقًا')}</span>
                 <span className="font-semibold text-emerald-600">{formatAmount(info.paid)} DA</span>
               </div>
+              {info.advances > 0 ? (
+                <div className="flex justify-between py-0.5">
+                  <span className="text-neutral-500">{tr(locale, 'Avances', 'السلف')}</span>
+                  <span className="font-semibold text-amber-600">− {formatAmount(info.advances)} DA</span>
+                </div>
+              ) : null}
               <div className="mt-1 flex justify-between border-t border-neutral-200 pt-2">
                 <span className="font-semibold text-neutral-800">{tr(locale, 'Reste à payer', 'المتبقي للدفع')}</span>
                 <span className={`font-bold ${info.remaining > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>

@@ -73,23 +73,47 @@ export function RemunerationFields({
         </div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor={amountName} className="text-sm font-medium text-neutral-700">{active.amountLabel}</label>
-        <div className="relative">
-          <input
-            id={amountName}
-            name={amountName}
-            type="number"
-            min="0"
-            step="0.01"
-            defaultValue={defaultAmount}
-            key={method}
-            className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 pr-12 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-            required={amountRequired}
-          />
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-neutral-400">DA</span>
+      {method === 'PIECE_BASED' ? (
+        // Per-order pay is computed automatically from the worker's Production
+        // Sheet, so there is no manual amount to enter.
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-neutral-700">{active.amountLabel}</label>
+          <input type="hidden" name={amountName} value="0" />
+          <div className="relative">
+            <input
+              type="text"
+              disabled
+              value={tr(locale, 'From the Production Sheet', 'من ورقة الإنتاج')}
+              className="w-full rounded-lg border border-neutral-200 bg-neutral-100 px-3 py-2.5 text-sm text-neutral-500"
+            />
+          </div>
+          <p className="text-xs text-neutral-400">
+            {tr(
+              locale,
+              'Pay is calculated automatically from this worker’s Production Sheet (weekly earnings → monthly gains), minus advances.',
+              'يُحتسب الأجر تلقائيًا من ورقة إنتاج هذا العامل (مكسب الأسبوع ← أرباح الشهر)، مطروحًا منه السلف.',
+            )}
+          </p>
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={amountName} className="text-sm font-medium text-neutral-700">{active.amountLabel}</label>
+          <div className="relative">
+            <input
+              id={amountName}
+              name={amountName}
+              type="number"
+              min="0"
+              step="0.01"
+              defaultValue={defaultAmount}
+              key={method}
+              className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 pr-12 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              required={amountRequired}
+            />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-neutral-400">DA</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
