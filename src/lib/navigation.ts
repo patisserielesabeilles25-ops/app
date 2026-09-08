@@ -5,6 +5,7 @@ import {
   CalendarDays,
   Contact,
   Package,
+  NotebookPen,
   Wallet,
   Tags,
   BarChart3,
@@ -47,6 +48,7 @@ export const NAV_SECTIONS: NavSection[] = [
     title: 'Operations',
     items: [
       { href: '/orders', label: 'Orders', icon: ClipboardList, permission: 'orders.view' },
+      { href: '/production-sheets', label: 'Production Sheets', icon: NotebookPen, permission: 'orders.view' },
       { href: '/clients', label: 'Clients', icon: Contact, permission: 'orders.view' },
       { href: '/calendar', label: 'Calendar', icon: CalendarDays, permission: 'calendar.view' },
       { href: '/products', label: 'Products', icon: Package, permission: 'products.view' },

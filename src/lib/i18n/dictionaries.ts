@@ -13,6 +13,7 @@ export const dictionaries: Record<Locale, Dict> = {
     nav: {
       '/dashboard': 'Dashboard',
       '/orders': 'Orders',
+      '/production-sheets': 'Production Sheets',
       '/clients': 'Clients',
       '/calendar': 'Calendar',
       '/products': 'Products',
@@ -44,6 +45,7 @@ export const dictionaries: Record<Locale, Dict> = {
     nav: {
       '/dashboard': 'لوحة التحكم',
       '/orders': 'الطلبات',
+      '/production-sheets': 'أوراق الإنتاج',
       '/clients': 'العملاء',
       '/calendar': 'التقويم',
       '/products': 'المنتجات',
