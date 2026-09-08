@@ -1,9 +1,12 @@
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Printer } from 'lucide-react';
-import { requirePermission } from '@/lib/auth/permissions';
+import { forbidden } from 'next/navigation';
+import { ChevronLeft, ChevronRight, Printer, Eye } from 'lucide-react';
 import { requireUser } from '@/lib/auth/session';
+import { getMyRoleKeys } from '@/lib/auth/permissions';
 import { createClient } from '@/lib/supabase/server';
-import { getMyProductionLog, weekStartOf, addDays } from '@/lib/production/queries';
+import { getAgents } from '@/lib/agents/queries';
+import { getProductionLogFor, weekStartOf, addDays } from '@/lib/production/queries';
+import { SHEETS, type SheetKey } from '@/lib/production/rows';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ProductionLogEditor } from '@/components/production/ProductionLogEditor';
 import { getLocale } from '@/lib/i18n/server';
@@ -15,38 +18,68 @@ export const metadata = { title: 'Production Sheets — Nahla Cake Panel' };
 export default async function ProductionSheetsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ week?: string }>;
+  searchParams: Promise<{ week?: string; user?: string }>;
 }) {
-  await requirePermission('orders.view');
   const locale = await getLocale();
   const user = await requireUser();
-  const sp = await searchParams;
+  const roles = await getMyRoleKeys();
 
+  const isMaster = roles.has('admin');
+  const canMasquage = isMaster || roles.has('maskage');
+  const canPreparation = isMaster || roles.has('preparateur');
+
+  // Which sheets this user may see. Masters see both; workers see their own kind.
+  const sheets: SheetKey[] = isMaster
+    ? SHEETS
+    : SHEETS.filter((s) => (s === 'MASQUAGE' ? canMasquage : canPreparation));
+
+  // No sheet role → no access.
+  if (sheets.length === 0) forbidden();
+
+  const sp = await searchParams;
   const weekStart = weekStartOf(sp.week);
   const weekEnd = addDays(weekStart, 6);
   const prevWeek = addDays(weekStart, -7);
   const nextWeek = addDays(weekStart, 7);
   const thisWeek = weekStartOf();
 
-  const [entries, supabase] = await Promise.all([getMyProductionLog(weekStart), createClient()]);
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', user.id)
-    .maybeSingle();
-  const name = profile?.full_name?.trim() || user.email || '';
+  // A master can view any worker's sheet (read-only); everyone else sees theirs.
+  const workers = isMaster ? await getAgents() : [];
+  const viewingId = isMaster && sp.user ? sp.user : user.id;
+  const readOnly = viewingId !== user.id;
 
-  const href = (w: string) => `/production-sheets?week=${w}`;
+  const supabase = await createClient();
+  const [entries, { data: profile }] = await Promise.all([
+    getProductionLogFor(viewingId, weekStart),
+    supabase.from('profiles').select('full_name').eq('id', viewingId).maybeSingle(),
+  ]);
+  const viewingName = profile?.full_name?.trim() || (viewingId === user.id ? user.email : '') || '';
+
+  const href = (params: { week?: string; user?: string }) => {
+    const w = params.week ?? weekStart;
+    const u = params.user ?? (isMaster && sp.user ? sp.user : undefined);
+    const qs = new URLSearchParams({ week: w });
+    if (u && u !== user.id) qs.set('user', u);
+    return `/production-sheets?${qs.toString()}`;
+  };
 
   return (
     <>
       <PageHeader
-        title={tr(locale, 'My production sheet', 'ورقة إنتاجي')}
-        description={tr(
-          locale,
-          `${name} — enter how many pieces you finished each day, then save.`,
-          `${name} — أدخل عدد القطع التي أنجزتها كل يوم، ثم احفظ.`,
-        )}
+        title={
+          readOnly
+            ? tr(locale, `${viewingName}'s sheet`, `ورقة ${viewingName}`)
+            : tr(locale, 'My production sheet', 'ورقة إنتاجي')
+        }
+        description={
+          readOnly
+            ? tr(locale, 'Read-only view (Master).', 'عرض للقراءة فقط (المشرف).')
+            : tr(
+                locale,
+                `${viewingName} — enter how many pieces you finished each day, then save.`,
+                `${viewingName} — أدخل عدد القطع التي أنجزتها كل يوم، ثم احفظ.`,
+              )
+        }
         action={
           <a
             href="/production-sheets/print"
@@ -60,10 +93,37 @@ export default async function ProductionSheetsPage({
         }
       />
 
+      {/* Master: pick whose sheet to view. */}
+      {isMaster && workers.length > 0 ? (
+        <form method="get" className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-neutral-200 bg-white px-4 py-3">
+          <input type="hidden" name="week" value={weekStart} />
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="user" className="inline-flex items-center gap-1.5 text-sm font-medium text-neutral-700">
+              <Eye className="h-4 w-4" />
+              {tr(locale, 'View a worker’s sheet', 'عرض ورقة عامل')}
+            </label>
+            <select
+              id="user"
+              name="user"
+              defaultValue={viewingId === user.id ? '' : viewingId}
+              className="rounded-lg border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+            >
+              <option value="">{tr(locale, 'My own sheet', 'ورقتي أنا')}</option>
+              {workers.map((w) => (
+                <option key={w.id} value={w.id}>{w.name}</option>
+              ))}
+            </select>
+          </div>
+          <button type="submit" className="rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100">
+            {tr(locale, 'View', 'عرض')}
+          </button>
+        </form>
+      ) : null}
+
       {/* Week navigation */}
       <div className="mb-6 flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-4 py-3">
         <Link
-          href={href(prevWeek)}
+          href={href({ week: prevWeek })}
           className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -74,7 +134,7 @@ export default async function ProductionSheetsPage({
             {formatDate(weekStart)} — {formatDate(weekEnd)}
           </p>
           {weekStart !== thisWeek ? (
-            <Link href={href(thisWeek)} className="text-xs font-medium text-amber-600 hover:underline">
+            <Link href={href({ week: thisWeek })} className="text-xs font-medium text-amber-600 hover:underline">
               {tr(locale, 'Go to this week', 'الذهاب إلى هذا الأسبوع')}
             </Link>
           ) : (
@@ -82,7 +142,7 @@ export default async function ProductionSheetsPage({
           )}
         </div>
         <Link
-          href={href(nextWeek)}
+          href={href({ week: nextWeek })}
           className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
         >
           {tr(locale, 'Next week', 'الأسبوع التالي')}
@@ -90,8 +150,14 @@ export default async function ProductionSheetsPage({
         </Link>
       </div>
 
-      {/* Editable grid — keyed by week so inputs reset when the week changes. */}
-      <ProductionLogEditor key={weekStart} weekStart={weekStart} initial={entries} />
+      {/* Editable grid — keyed by week + viewed user so inputs reset on change. */}
+      <ProductionLogEditor
+        key={`${weekStart}:${viewingId}`}
+        weekStart={weekStart}
+        initial={entries}
+        sheets={sheets}
+        readOnly={readOnly}
+      />
     </>
   );
 }

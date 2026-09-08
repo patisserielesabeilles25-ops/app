@@ -71,6 +71,19 @@ export async function hasPermission(perm: Permission): Promise<boolean> {
   return perms.has(perm);
 }
 
+/**
+ * Role keys held by the current user (e.g. 'admin', 'maskage', 'preparateur').
+ * Resolved via the SECURITY DEFINER `my_role_keys()` RPC. Cached per request.
+ */
+export const getMyRoleKeys = cache(async (): Promise<Set<string>> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('my_role_keys');
+  if (error) {
+    throw new Error(`Failed to load roles: ${error.message}`);
+  }
+  return new Set((data ?? []) as string[]);
+});
+
 /** First route the user can access, used for post-login / root landing. */
 const LANDING_ORDER: [Permission, string][] = [
   ['dashboard.view', '/dashboard'],
