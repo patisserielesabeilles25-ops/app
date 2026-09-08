@@ -32,7 +32,7 @@ export const ROWS: RowDef[] = [
   { key: '25_30', label: '25 / 30', ltr: true },
   { key: '30_plus', label: 'اكثر من 30' },
   { key: 'plateau', label: 'PLATEAU', sep: true, ltr: true },
-  { key: '3_4p', label: '3/4P', ltr: true },
+  { key: '3_4p', label: 'PLATEAU M', ltr: true },
   { key: '1_2p', label: '1/2P', ltr: true },
   { key: '1_4p', label: '1/4P', ltr: true },
   { key: '1_6p', label: '1/6P', ltr: true },
