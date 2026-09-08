@@ -38,17 +38,6 @@ export function ProductionSheet({
   const rows = extraSizes ? [ROWS[0], ...EXTRA_AFTER_FIRST, ...ROWS.slice(1)] : ROWS;
   return (
     <div dir="rtl" className="w-full text-neutral-900">
-      {/* Worker / period header lines */}
-      <div className="mb-3 space-y-2 text-sm font-semibold">
-        <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-2">
-          <span>اسم العامل : ...................................</span>
-          <span>الشهر : ...................................</span>
-        </div>
-        <div>
-          <span>الأسبوع : من ..................... الى .....................</span>
-        </div>
-      </div>
-
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
