@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { CanonicalStatusBadge } from '@/components/ui/StatusBadge';
 import { ImageZoom } from '@/components/orders/ImageZoom';
+import { CoatingDot } from '@/components/orders/CoatingDot';
 import { orderCanonicalStatus } from '@/lib/statuses/derive';
 import { cn, formatDate, formatTime } from '@/lib/utils';
 import { tr } from '@/lib/i18n/t';
@@ -218,6 +219,9 @@ export default async function CalendarPage({
                                 {tr(locale, 'NEW', 'جديد')}
                               </span>
                             ) : null}
+                          </div>
+                          <div className="mt-1">
+                            <CoatingDot coating={o.coating} />
                           </div>
                         </td>
                         <td className="px-4 py-3 text-neutral-700">{o.customer_name}</td>

@@ -28,6 +28,7 @@ export type OrderListRow = {
   custom_status_id: string | null;
   customer_id: string | null;
   fourage: string | null;
+  coating: string | null;
   remaining?: number;
   product_name: string | null;
   image_url: string | null;
@@ -36,7 +37,7 @@ export type OrderListRow = {
 };
 
 const LIST_COLUMNS =
-  'id, order_number, customer_id, customer_name, customer_phone, cake_size_cm, delivery_date, delivery_time, production_status, delivery_status, fulfillment, returned_at, reported_at, production_stage, custom_status_id, fourage';
+  'id, order_number, customer_id, customer_name, customer_phone, cake_size_cm, delivery_date, delivery_time, production_status, delivery_status, fulfillment, returned_at, reported_at, production_stage, custom_status_id, fourage, coating';
 
 /** Remove characters that would break a PostgREST or()/ilike filter. */
 function sanitize(term: string): string {

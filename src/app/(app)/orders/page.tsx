@@ -5,6 +5,7 @@ import { getOrders, getOrderStatusCounts } from '@/lib/orders/queries';
 import { getAgents } from '@/lib/agents/queries';
 import { OrderStageAdvance } from '@/components/orders/OrderStageAdvance';
 import { ImageZoom } from '@/components/orders/ImageZoom';
+import { CoatingDot } from '@/components/orders/CoatingDot';
 import { OrderPayDialog } from '@/components/orders/OrderPayDialog';
 import { OrderSelectionProvider, OrderSelectRadio } from '@/components/orders/OrderSelection';
 import { OrdersActionBar } from '@/components/orders/OrdersActionBar';
@@ -228,7 +229,10 @@ export default async function OrdersPage({
                     {formatDate(o.delivery_date)}
                     <span className="text-neutral-400"> · {formatTime(o.delivery_time)}</span>
                   </td>
-                  <td className="px-4 py-3 text-neutral-600">{o.product_name || <span className="text-neutral-300">—</span>}</td>
+                  <td className="px-4 py-3 text-neutral-600">
+                    <div>{o.product_name || <span className="text-neutral-300">—</span>}</div>
+                    <CoatingDot coating={o.coating} />
+                  </td>
                   <td className="px-4 py-3">
                     {o.image_url ? (
                       <ImageZoom url={o.image_url} />
