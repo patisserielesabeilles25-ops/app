@@ -7,8 +7,9 @@ export const ATT_CYCLE: AttendanceStatus[] = ['PRESENT', 'ABSENT', 'HALF', 'LEAV
 
 export type FixedMethod = 'DAILY' | 'WEEKLY' | 'MONTHLY';
 
-/** Working days per pay period → the value of one day = rate / working-days. */
-export const WORKING_DAYS: Record<FixedMethod, number> = { DAILY: 1, WEEKLY: 6, MONTHLY: 26 };
+/** Days per pay period → the value of one day = rate / days. Calendar-based:
+ *  week = 7 days (weekly ÷ 7), month = 30 (monthly ÷ 30). */
+export const WORKING_DAYS: Record<FixedMethod, number> = { DAILY: 1, WEEKLY: 7, MONTHLY: 30 };
 
 /** Days of pay lost per status. Paid leave (LEAVE) costs nothing. */
 export const ABSENCE_WEIGHT: Record<AttendanceStatus, number> = {
