@@ -65,6 +65,14 @@ export function PayEmployeeDialog({ info }: { info: PayInfo }) {
                 <span className="text-neutral-500">{tr(locale, `Gains (${info.periodLabel})`, `الأرباح (${info.periodLabel})`)}</span>
                 <span className="font-semibold text-neutral-800">{formatAmount(info.gains)} DA</span>
               </div>
+              {info.absence > 0 ? (
+                <div className="flex justify-between py-0.5">
+                  <span className="text-neutral-500">
+                    {tr(locale, `Absences (${info.absentDays} j)`, `الغيابات (${info.absentDays} ي)`)}
+                  </span>
+                  <span className="font-semibold text-red-600">− {formatAmount(info.absence)} DA</span>
+                </div>
+              ) : null}
               <div className="flex justify-between py-0.5">
                 <span className="text-neutral-500">{tr(locale, 'Avance', 'السلفة')}</span>
                 <span className="font-semibold text-emerald-600">{formatAmount(info.paid)} DA</span>

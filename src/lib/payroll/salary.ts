@@ -2,6 +2,7 @@ import 'server-only';
 
 import { createServiceClient } from '@/lib/supabase/service';
 import { PIECE_RATES } from '@/lib/production/rates';
+import { WORKING_DAYS, ABSENCE_WEIGHT, type AttendanceStatus, type FixedMethod } from '@/lib/attendance/config';
 
 export type SalaryPayment = { id: string; amount: number; date: string; note: string | null };
 export type PayInfo = {
@@ -10,6 +11,9 @@ export type PayInfo = {
   method: 'PIECE_BASED' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
   periodLabel: string;
   gains: number;
+  /** Salary deducted for absent days this period (fixed-rate only). */
+  absence: number;
+  absentDays: number;
   paid: number;
   advances: number;
   remaining: number;
@@ -67,14 +71,25 @@ export async function getSalaryOverviews(): Promise<Map<string, PayInfo>> {
     .filter((e) => e.payment_method === 'PIECE_BASED')
     .map((e) => e.profile_id as string);
 
-  const [{ data: rates }, { data: txns }, { data: advances }, { data: logs }] = await Promise.all([
+  const [{ data: rates }, { data: txns }, { data: advances }, { data: logs }, { data: att }] = await Promise.all([
     service.from('payroll_rates').select('employee_id, rate, rate_kind, effective_from, is_active').in('employee_id', empIds).eq('is_active', true),
     service.from('financial_transactions').select('id, employee_id, amount, occurred_at, description').in('employee_id', empIds).eq('category', 'PAYROLL_SALARY').order('occurred_at', { ascending: false }),
     service.from('payroll_advances').select('employee_id, amount, advance_date').in('employee_id', empIds).gte('advance_date', monthStartYmd).lt('advance_date', monthEndYmd),
     pieceProfileIds.length > 0
       ? service.from('production_logs').select('profile_id, week_start, sheet, row_key, day, qty').in('profile_id', pieceProfileIds).gte('week_start', logsFrom).lt('week_start', monthEndYmd)
       : Promise.resolve({ data: [] as { profile_id: string; week_start: string; sheet: 'MASQUAGE' | 'PREPARATION'; row_key: string; day: number; qty: number }[] }),
+    // Attendance exceptions this month (from a few days before, for week spans).
+    service.from('attendance').select('employee_id, work_date, status').in('employee_id', empIds).gte('work_date', logsFrom).lt('work_date', monthEndYmd),
   ]);
+
+  // Attendance rows per employee (for absence deductions).
+  const attByEmp = new Map<string, { date: string; status: AttendanceStatus }[]>();
+  for (const r of att ?? []) {
+    const e = r.employee_id as string;
+    const list = attByEmp.get(e) ?? [];
+    list.push({ date: r.work_date as string, status: r.status as AttendanceStatus });
+    attByEmp.set(e, list);
+  }
 
   // Production Sheet earnings for the month, per worker profile.
   const sheetEarnByProfile = new Map<string, number>();
@@ -112,6 +127,7 @@ export async function getSalaryOverviews(): Promise<Map<string, PayInfo>> {
     const method = e.payment_method as PayInfo['method'];
     const { start, label } = periodStart(method);
     const kind = method === 'PIECE_BASED' ? 'PIECE' : method;
+    const periodStartYmd = ymd(start);
 
     // Gains for the period. Per-order workers earn from their Production Sheet.
     let gains: number;
@@ -119,6 +135,18 @@ export async function getSalaryOverviews(): Promise<Map<string, PayInfo>> {
       gains = sheetEarnByProfile.get(e.profile_id as string) ?? 0;
     } else {
       gains = rateByEmp.get(id)?.get(kind) ?? 0;
+    }
+
+    // Absence deduction (fixed-rate only): one day-equivalent per absent day.
+    let absence = 0;
+    let absentDays = 0;
+    if (method !== 'PIECE_BASED') {
+      const weight = (attByEmp.get(id) ?? [])
+        .filter((a) => a.date >= periodStartYmd)
+        .reduce((s, a) => s + (ABSENCE_WEIGHT[a.status] ?? 0), 0);
+      absentDays = weight;
+      const dailyEquiv = gains / WORKING_DAYS[method as FixedMethod];
+      absence = Math.min(gains, dailyEquiv * weight);
     }
 
     // Paid within the period + full history.
@@ -141,9 +169,11 @@ export async function getSalaryOverviews(): Promise<Map<string, PayInfo>> {
       method,
       periodLabel: label,
       gains,
+      absence,
+      absentDays,
       paid,
       advances: advancesTaken,
-      remaining: gains - paid - advancesTaken,
+      remaining: gains - absence - paid - advancesTaken,
       history,
     });
   }

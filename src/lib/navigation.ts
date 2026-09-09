@@ -6,6 +6,7 @@ import {
   Contact,
   Package,
   NotebookPen,
+  CalendarCheck,
   Wallet,
   Tags,
   BarChart3,
@@ -49,6 +50,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { href: '/orders', label: 'Orders', icon: ClipboardList, permission: 'orders.view' },
       { href: '/production-sheets', label: 'Production Sheets', icon: NotebookPen, permission: 'orders.view' },
+      { href: '/attendance', label: 'Attendance', icon: CalendarCheck, permission: 'payroll.view' },
       { href: '/clients', label: 'Clients', icon: Contact, permission: 'orders.view' },
       { href: '/calendar', label: 'Calendar', icon: CalendarDays, permission: 'calendar.view' },
       { href: '/products', label: 'Products', icon: Package, permission: 'products.view' },
