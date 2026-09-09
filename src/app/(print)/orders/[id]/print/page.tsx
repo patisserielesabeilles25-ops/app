@@ -85,39 +85,39 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
         {/* Image + amounts */}
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div
-            className="flex min-h-[220px] items-center justify-center overflow-hidden rounded-2xl"
+            className="flex min-h-[380px] items-center justify-center overflow-hidden rounded-2xl"
             style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
           >
             {imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={imageUrl} alt="Modèle" className="h-full max-h-[300px] w-full object-contain" />
+              <img src={imageUrl} alt="Modèle" className="h-full max-h-[460px] w-full object-contain" />
             ) : (
               <span className="text-4xl">🎂</span>
             )}
           </div>
-          <div
-            className="space-y-2 rounded-2xl px-4 py-4"
-            style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
-          >
-            <AmountLine label="المبلغ الإجمالي" value={amt(financials ? financials.total_amount + financials.montage_amount + financials.delivery_amount : null)} />
-            <AmountLine label="المبلغ المدفوع" value={amt(financials?.advance_payment)} />
-            <AmountLine label="المبلغ المتبقي" value={amt(financials?.remaining_amount)} />
-            <AmountLine label="مبلغ التركيب" value={amt(financials?.montage_amount)} />
-            <AmountLine label="مبلغ التوصيل" value={amt(financials?.delivery_amount)} />
+          <div className="flex flex-col gap-3">
+            <div
+              className="space-y-2 rounded-2xl px-4 py-4"
+              style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
+            >
+              <AmountLine label="المبلغ الإجمالي" value={amt(financials ? financials.total_amount + financials.montage_amount + financials.delivery_amount : null)} />
+              <AmountLine label="المبلغ المدفوع" value={amt(financials?.advance_payment)} />
+              <AmountLine label="المبلغ المتبقي" value={amt(financials?.remaining_amount)} />
+              <AmountLine label="مبلغ التركيب" value={amt(financials?.montage_amount)} />
+              <AmountLine label="مبلغ التوصيل" value={amt(financials?.delivery_amount)} />
+            </div>
+            {/* Details fill the space under the amounts, matching the image height. */}
+            <div
+              className="flex-1 rounded-2xl px-4 py-3"
+              style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
+            >
+              <span className="font-bold text-neutral-900">تفاصيل النموذج : </span>
+              <span className="text-neutral-900">{order.description || ''}</span>
+            </div>
           </div>
         </div>
 
-        {/* Details */}
-        <div className="mt-3">
-          <div
-            className="min-h-[130px] rounded-2xl px-4 py-3"
-            style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
-          >
-            <span className="font-bold text-neutral-900">تفاصيل النموذج : </span>
-            <span className="text-neutral-900">{order.description || ''}</span>
-          </div>
-          <p className="mt-2 text-left text-xs text-neutral-400" dir="ltr">Réf. {order.order_number}</p>
-        </div>
+        <p className="mt-2 text-left text-xs text-neutral-400" dir="ltr">Réf. {order.order_number}</p>
 
         {/* Footer */}
         <div className="mt-6 border-t border-neutral-200 pt-4 text-center">
