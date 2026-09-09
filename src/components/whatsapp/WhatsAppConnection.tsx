@@ -2,7 +2,7 @@
 
 import { useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, QrCode, Loader2, Power, PlugZap, Smartphone } from 'lucide-react';
+import { MessageCircle, QrCode, Loader2, Power, PlugZap, Smartphone, RefreshCw } from 'lucide-react';
 import { requestConnect, requestDisconnect } from '@/lib/whatsapp/actions';
 import { useLocale } from '@/lib/i18n/LocaleProvider';
 import { tr } from '@/lib/i18n/t';
@@ -127,6 +127,26 @@ export function WhatsAppConnection({
               <li className="flex items-start gap-2 font-medium text-neutral-800">
                 {tr(locale, 'Scan this QR code with WhatsApp.', 'امسح رمز QR هذا بواسطة واتساب.')}
               </li>
+              {canManage ? (
+                <li className="pt-1">
+                  <button
+                    type="button"
+                    onClick={connect}
+                    disabled={pending}
+                    className="inline-flex items-center gap-2 rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-60"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${pending ? 'animate-spin' : ''}`} />
+                    {tr(locale, 'Refresh QR code', 'تحديث رمز QR')}
+                  </button>
+                  <p className="mt-1 text-xs text-neutral-400">
+                    {tr(
+                      locale,
+                      'The code expires after ~1 minute — refresh if scanning fails.',
+                      'ينتهي الرمز بعد حوالي دقيقة — حدّثه إذا فشل المسح.',
+                    )}
+                  </p>
+                </li>
+              ) : null}
             </ol>
           </div>
         </div>

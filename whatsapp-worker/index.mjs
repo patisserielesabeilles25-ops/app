@@ -55,6 +55,7 @@ let isConnected = false;
 let connecting = false;
 let processingQueue = false;
 let manualLogout = false; // set true while we intentionally log out (skip auto-reconnect)
+let manualRestart = false; // set true while we intentionally tear down to emit a fresh QR
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -133,6 +134,13 @@ async function connectToWhatsApp() {
         isConnected = false;
         connecting = false;
 
+        // Intentional teardown to emit a fresh QR — the new socket is already
+        // starting, so ignore this close (no status change, no reconnect).
+        if (manualRestart) {
+          manualRestart = false;
+          return;
+        }
+
         // lastDisconnect.error is a Boom error; read its HTTP-ish status code.
         const statusCode = lastDisconnect?.error?.output?.statusCode;
         const loggedOut = statusCode === DisconnectReason.loggedOut;
@@ -205,11 +213,23 @@ async function handleCommands() {
     if (command === 'connect') {
       // Clear command first so we don't reprocess it while connecting.
       await updateConnection({ command: null });
-      if (!isConnected && !connecting) {
-        await connectToWhatsApp();
-      } else {
-        log.info('Connect command ignored — already connected/connecting.');
+      if (isConnected) {
+        log.info('Connect command ignored — already connected.');
+        return;
       }
+      // If a socket is mid-handshake, tear it down so we emit a brand-new QR
+      // (this is what the panel's "Refresh QR" button triggers).
+      if (sock) {
+        manualRestart = true;
+        try {
+          sock.end(undefined);
+        } catch (err) {
+          log.warn({ err }, 'sock.end() threw during QR refresh (continuing)');
+        }
+        sock = null;
+      }
+      connecting = false;
+      await connectToWhatsApp();
       return;
     }
 

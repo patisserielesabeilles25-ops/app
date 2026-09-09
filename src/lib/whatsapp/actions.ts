@@ -183,9 +183,11 @@ export async function deleteTemplate(formData: FormData): Promise<void> {
 export async function requestConnect(): Promise<void> {
   await requirePermission('whatsapp.manage');
   const supabase = await createClient();
+  // Clear any stale QR — the worker will publish a fresh one. Showing an old QR
+  // makes the phone report an error because WhatsApp codes expire in ~60s.
   await supabase
     .from('whatsapp_connection')
-    .update({ command: 'connect', status: 'connecting' })
+    .update({ command: 'connect', status: 'connecting', qr_code: null })
     .eq('id', 'default');
   revalidatePath('/whatsapp');
 }
