@@ -5,7 +5,9 @@ import { PIECE_RATES } from '@/lib/production/rates';
 
 export type SalaryPayment = { id: string; amount: number; date: string; note: string | null };
 export type PayInfo = {
-  employeeId: string;
+  /** The user (profile) being paid. The backing employee is resolved at pay time. */
+  profileId: string;
+  employeeId: string | null;
   name: string;
   method: 'PIECE_BASED' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
   periodLabel: string;
@@ -46,12 +48,22 @@ function periodStart(method: PayInfo['method']): { start: Date; label: string } 
 export async function getSalaryOverviews(): Promise<Map<string, PayInfo>> {
   const service = createServiceClient();
 
+  // Every active user is payable, whether or not they have an employee row yet.
+  const { data: profs } = await service
+    .from('profiles')
+    .select('id, full_name')
+    .eq('is_active', true);
+  const profiles = profs ?? [];
+  if (profiles.length === 0) return new Map();
+  const profileIds = profiles.map((p) => p.id as string);
+
   const { data: emps } = await service
     .from('employees')
-    .select('id, profile_id, payment_method, full_name, last_settled_at')
-    .not('profile_id', 'is', null);
+    .select('id, profile_id, payment_method, last_settled_at')
+    .in('profile_id', profileIds);
   const employees = emps ?? [];
-  if (employees.length === 0) return new Map();
+  const empByProfile = new Map<string, (typeof employees)[number]>();
+  for (const e of employees) empByProfile.set(e.profile_id as string, e);
 
   const empIds = employees.map((e) => e.id as string);
   const now = new Date();
@@ -96,14 +108,33 @@ export async function getSalaryOverviews(): Promise<Map<string, PayInfo>> {
   }
 
   const map = new Map<string, PayInfo>();
-  for (const e of employees) {
-    const id = e.id as string;
-    const profileId = e.profile_id as string;
-    const method = e.payment_method as PayInfo['method'];
+  for (const p of profiles) {
+    const profileId = p.id as string;
+    const name = (p.full_name as string)?.trim() || 'Employé';
+    const emp = empByProfile.get(profileId);
+
+    // No employee yet → payable with a manual amount; nothing has accrued.
+    if (!emp) {
+      map.set(profileId, {
+        profileId,
+        employeeId: null,
+        name,
+        method: 'MONTHLY',
+        periodLabel: periodStart('MONTHLY').label,
+        gains: 0,
+        advance: 0,
+        remaining: 0,
+        history: [],
+      });
+      continue;
+    }
+
+    const id = emp.id as string;
+    const method = emp.payment_method as PayInfo['method'];
     const { start: pStart, label } = periodStart(method);
     const kind = method === 'PIECE_BASED' ? 'PIECE' : method;
 
-    const settledAt = e.last_settled_at ? new Date(e.last_settled_at as string) : null;
+    const settledAt = emp.last_settled_at ? new Date(emp.last_settled_at as string) : null;
     const settledThisPeriod = settledAt !== null && settledAt >= pStart;
     // Everything from here on counts toward the current (open) cycle.
     const cycleStart = settledThisPeriod ? (settledAt as Date) : pStart;
@@ -135,8 +166,9 @@ export async function getSalaryOverviews(): Promise<Map<string, PayInfo>> {
       }));
 
     map.set(profileId, {
+      profileId,
       employeeId: id,
-      name: e.full_name as string,
+      name,
       method,
       periodLabel: label,
       gains,

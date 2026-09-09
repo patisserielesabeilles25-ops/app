@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth/session';
 import { requirePermission, hasPermission } from '@/lib/auth/permissions';
+import { ensureAgentEmployeeId } from '@/lib/agents/resolve';
 import { writeAudit } from '@/lib/audit/log';
 import { EmployeeSchema, RateSchema } from '@/lib/validation/payroll';
 import { RATE_KIND, isPaymentMethod, type PaymentMethod } from '@/lib/payroll/methods';
@@ -14,13 +15,21 @@ type Method = PaymentMethod;
 /** Record a salary payment to an employee (posts a charge to Finance). */
 export async function recordSalaryPayment(formData: FormData): Promise<void> {
   await requirePermission('payroll.pay');
-  const employeeId = String(formData.get('employeeId') ?? '');
+  // Accept either a profile id (Users pay dialog) or a direct employee id.
+  const profileId = String(formData.get('profileId') ?? '');
+  const directEmployeeId = String(formData.get('employeeId') ?? '');
   const amount = Number(formData.get('amount')) || 0; // 0 = settle only (close the cycle)
   const paidOn = String(formData.get('paidOn') ?? '');
   const note = String(formData.get('note') ?? '').trim();
 
-  if (!employeeId || amount < 0) {
+  if (amount < 0 || (!profileId && !directEmployeeId)) {
     redirect(`/users?error=${encodeURIComponent('Entrez un montant valide.')}`);
+  }
+
+  // Resolve (creating on first use) the employee backing this user.
+  const employeeId = directEmployeeId || (await ensureAgentEmployeeId(profileId));
+  if (!employeeId) {
+    redirect(`/users?error=${encodeURIComponent('Utilisateur introuvable.')}`);
   }
   const supabase = await createClient();
   const { error } = await supabase.rpc('record_salary_payment', {

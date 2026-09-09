@@ -117,12 +117,12 @@ export function PayEmployeeDialog({ info }: { info: PayInfo }) {
 
             {/* Payment form */}
             <form action={recordSalaryPayment} className="space-y-4">
-              <input type="hidden" name="employeeId" value={info.employeeId} />
+              <input type="hidden" name="profileId" value={info.profileId} />
               <div className="flex flex-col gap-1.5">
-                <label htmlFor={`amount-${info.employeeId}`} className="text-sm font-medium text-neutral-700">{tr(locale, 'Montant à verser (DA)', 'المبلغ المطلوب دفعه (DA)')}</label>
+                <label htmlFor={`amount-${info.profileId}`} className="text-sm font-medium text-neutral-700">{tr(locale, 'Montant à verser (DA)', 'المبلغ المطلوب دفعه (DA)')}</label>
                 <div className="relative">
                   <input
-                    id={`amount-${info.employeeId}`}
+                    id={`amount-${info.profileId}`}
                     name="amount"
                     type="number"
                     min="0"
@@ -135,9 +135,9 @@ export function PayEmployeeDialog({ info }: { info: PayInfo }) {
                 </div>
               </div>
               <div className="flex flex-col gap-1.5">
-                <label htmlFor={`paidOn-${info.employeeId}`} className="text-sm font-medium text-neutral-700">{tr(locale, 'Date de paiement', 'تاريخ الدفع')}</label>
+                <label htmlFor={`paidOn-${info.profileId}`} className="text-sm font-medium text-neutral-700">{tr(locale, 'Date de paiement', 'تاريخ الدفع')}</label>
                 <input
-                  id={`paidOn-${info.employeeId}`}
+                  id={`paidOn-${info.profileId}`}
                   name="paidOn"
                   type="date"
                   defaultValue={today}
@@ -145,9 +145,9 @@ export function PayEmployeeDialog({ info }: { info: PayInfo }) {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label htmlFor={`note-${info.employeeId}`} className="text-sm font-medium text-neutral-700">{tr(locale, 'Note (optionnel)', 'ملاحظة (اختياري)')}</label>
+                <label htmlFor={`note-${info.profileId}`} className="text-sm font-medium text-neutral-700">{tr(locale, 'Note (optionnel)', 'ملاحظة (اختياري)')}</label>
                 <input
-                  id={`note-${info.employeeId}`}
+                  id={`note-${info.profileId}`}
                   name="note"
                   placeholder={tr(locale, 'Ex: Paiement partiel mars…', 'مثال: دفعة جزئية مارس…')}
                   className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
