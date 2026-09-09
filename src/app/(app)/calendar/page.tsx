@@ -219,9 +219,7 @@ export default async function CalendarPage({
                                 {tr(locale, 'NEW', 'جديد')}
                               </span>
                             ) : null}
-                          </div>
-                          <div className="mt-1">
-                            <CoatingDot coating={o.coating} />
+                            <CoatingDot coating={o.coating} showLabel={false} />
                           </div>
                         </td>
                         <td className="px-4 py-3 text-neutral-700">{o.customer_name}</td>
