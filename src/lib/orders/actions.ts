@@ -292,6 +292,9 @@ export async function markOrderReturned(formData: FormData): Promise<void> {
   }
   revalidateOrderViews(id);
   revalidatePath('/clients');
+  revalidatePath('/finance');
+  revalidatePath('/finance/transactions');
+  revalidatePath('/finance/magasin');
   redirect(`/orders/${id}?returned=1`);
 }
 
@@ -306,6 +309,9 @@ export async function unmarkOrderReturned(formData: FormData): Promise<void> {
   }
   revalidateOrderViews(id);
   revalidatePath('/clients');
+  revalidatePath('/finance');
+  revalidatePath('/finance/transactions');
+  revalidatePath('/finance/magasin');
   redirect(`/orders/${id}?returncleared=1`);
 }
 
