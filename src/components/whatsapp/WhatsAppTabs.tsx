@@ -1,32 +1,28 @@
 'use client';
 
 import { useState } from 'react';
-import { Zap, FileText, History, BarChart3 } from 'lucide-react';
+import { Zap, History, BarChart3 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { AutomationsTab } from '@/components/whatsapp/AutomationsTab';
-import { TemplatesTab } from '@/components/whatsapp/TemplatesTab';
 import { HistoryTab } from '@/components/whatsapp/HistoryTab';
 import { AnalyticsTab } from '@/components/whatsapp/AnalyticsTab';
 import type {
   WhatsAppAutomation,
-  WhatsAppTemplate,
   WhatsAppMessage,
   WhatsAppCustomStatus,
 } from '@/lib/whatsapp/queries';
 import { useLocale } from '@/lib/i18n/LocaleProvider';
 import { tr } from '@/lib/i18n/t';
 
-type TabKey = 'automations' | 'templates' | 'history' | 'analytics';
+type TabKey = 'automations' | 'history' | 'analytics';
 
 export function WhatsAppTabs({
   automations,
-  templates,
   messages,
   customStatuses,
   canManage,
 }: {
   automations: WhatsAppAutomation[];
-  templates: WhatsAppTemplate[];
   messages: WhatsAppMessage[];
   customStatuses: WhatsAppCustomStatus[];
   canManage: boolean;
@@ -36,7 +32,6 @@ export function WhatsAppTabs({
 
   const tabs: { key: TabKey; label: string; icon: LucideIcon; count?: number }[] = [
     { key: 'automations', label: tr(locale, 'Automations', 'الأتمتة'), icon: Zap, count: automations.length },
-    { key: 'templates', label: tr(locale, 'Templates', 'القوالب'), icon: FileText, count: templates.length },
     { key: 'history', label: tr(locale, 'History', 'السجل'), icon: History },
     { key: 'analytics', label: tr(locale, 'Analytics', 'التحليلات'), icon: BarChart3 },
   ];
@@ -75,7 +70,6 @@ export function WhatsAppTabs({
       {tab === 'automations' ? (
         <AutomationsTab automations={automations} customStatuses={customStatuses} canManage={canManage} />
       ) : null}
-      {tab === 'templates' ? <TemplatesTab templates={templates} canManage={canManage} /> : null}
       {tab === 'history' ? <HistoryTab messages={messages} /> : null}
       {tab === 'analytics' ? <AnalyticsTab messages={messages} /> : null}
     </div>

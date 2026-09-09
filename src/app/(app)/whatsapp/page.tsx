@@ -4,7 +4,6 @@ import { requirePermission, getMyPermissions } from '@/lib/auth/permissions';
 import {
   getConnection,
   getAutomations,
-  getTemplates,
   getMessages,
   getCustomStatuses,
   getStats,
@@ -23,10 +22,9 @@ export default async function WhatsAppPage() {
   const perms = await getMyPermissions();
   const canManage = perms.has('whatsapp.manage');
 
-  const [connection, automations, templates, messages, customStatuses, stats] = await Promise.all([
+  const [connection, automations, messages, customStatuses, stats] = await Promise.all([
     getConnection(),
     getAutomations(locale),
-    getTemplates(),
     getMessages(50),
     getCustomStatuses(),
     getStats(),
@@ -102,7 +100,6 @@ export default async function WhatsAppPage() {
 
       <WhatsAppTabs
         automations={automations}
-        templates={templates}
         messages={messages}
         customStatuses={customStatuses}
         canManage={canManage}
