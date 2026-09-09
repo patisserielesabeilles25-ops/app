@@ -15,11 +15,11 @@ type Method = PaymentMethod;
 export async function recordSalaryPayment(formData: FormData): Promise<void> {
   await requirePermission('payroll.pay');
   const employeeId = String(formData.get('employeeId') ?? '');
-  const amount = Number(formData.get('amount'));
+  const amount = Number(formData.get('amount')) || 0; // 0 = settle only (close the cycle)
   const paidOn = String(formData.get('paidOn') ?? '');
   const note = String(formData.get('note') ?? '').trim();
 
-  if (!employeeId || !(amount > 0)) {
+  if (!employeeId || amount < 0) {
     redirect(`/users?error=${encodeURIComponent('Entrez un montant valide.')}`);
   }
   const supabase = await createClient();

@@ -67,14 +67,8 @@ export function PayEmployeeDialog({ info }: { info: PayInfo }) {
               </div>
               <div className="flex justify-between py-0.5">
                 <span className="text-neutral-500">{tr(locale, 'Avance', 'السلفة')}</span>
-                <span className="font-semibold text-emerald-600">{formatAmount(info.paid)} DA</span>
+                <span className="font-semibold text-amber-600">− {formatAmount(info.advance)} DA</span>
               </div>
-              {info.advances > 0 ? (
-                <div className="flex justify-between py-0.5">
-                  <span className="text-neutral-500">{tr(locale, 'Avances', 'السلف')}</span>
-                  <span className="font-semibold text-amber-600">− {formatAmount(info.advances)} DA</span>
-                </div>
-              ) : null}
               <div className="mt-1 flex justify-between border-t border-neutral-200 pt-2">
                 <span className="font-semibold text-neutral-800">{tr(locale, 'Reste à payer', 'المتبقي للدفع')}</span>
                 <span className={`font-bold ${info.remaining > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
@@ -125,7 +119,7 @@ export function PayEmployeeDialog({ info }: { info: PayInfo }) {
             <form action={recordSalaryPayment} className="space-y-4">
               <input type="hidden" name="employeeId" value={info.employeeId} />
               <div className="flex flex-col gap-1.5">
-                <label htmlFor={`amount-${info.employeeId}`} className="text-sm font-medium text-neutral-700">{tr(locale, 'Montant à verser (DA) *', 'المبلغ المطلوب دفعه (DA) *')}</label>
+                <label htmlFor={`amount-${info.employeeId}`} className="text-sm font-medium text-neutral-700">{tr(locale, 'Montant à verser (DA)', 'المبلغ المطلوب دفعه (DA)')}</label>
                 <div className="relative">
                   <input
                     id={`amount-${info.employeeId}`}
@@ -134,7 +128,6 @@ export function PayEmployeeDialog({ info }: { info: PayInfo }) {
                     min="0"
                     step="0.01"
                     placeholder="0"
-                    required
                     defaultValue={info.remaining > 0 ? info.remaining : ''}
                     className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 pr-12 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
                   />
@@ -160,6 +153,9 @@ export function PayEmployeeDialog({ info }: { info: PayInfo }) {
                   className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
                 />
               </div>
+              <p className="text-xs text-neutral-400">
+                {tr(locale, 'Confirming closes the pay cycle: gains and advance reset to zero.', 'التأكيد يُغلق دورة الدفع: تُصفَّر الأرباح والسلفة.')}
+              </p>
               <div className="flex justify-end gap-3 border-t border-neutral-100 pt-4">
                 <Button type="button" variant="secondary" onClick={() => ref.current?.close()}>{tr(locale, 'Annuler', 'إلغاء')}</Button>
                 <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">{tr(locale, 'Confirmer le paiement', 'تأكيد الدفع')}</Button>

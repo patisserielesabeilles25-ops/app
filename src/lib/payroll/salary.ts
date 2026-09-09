@@ -10,8 +10,8 @@ export type PayInfo = {
   method: 'PIECE_BASED' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
   periodLabel: string;
   gains: number;
-  paid: number;
-  advances: number;
+  /** Money already given this cycle (Magasin payroll expenses + salary payments). */
+  advance: number;
   remaining: number;
   history: SalaryPayment[];
 };
@@ -48,7 +48,7 @@ export async function getSalaryOverviews(): Promise<Map<string, PayInfo>> {
 
   const { data: emps } = await service
     .from('employees')
-    .select('id, profile_id, payment_method, full_name')
+    .select('id, profile_id, payment_method, full_name, last_settled_at')
     .not('profile_id', 'is', null);
   const employees = emps ?? [];
   if (employees.length === 0) return new Map();
@@ -56,43 +56,34 @@ export async function getSalaryOverviews(): Promise<Map<string, PayInfo>> {
   const empIds = employees.map((e) => e.id as string);
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const monthStartYmd = ymd(monthStart);
-  const monthEndYmd = ymd(monthEnd);
+  const monthEndYmd = ymd(new Date(now.getFullYear(), now.getMonth() + 1, 1));
   // Weeks that touch this month can start up to 6 days before it.
   const logsFrom = ymd(new Date(monthStart.getFullYear(), monthStart.getMonth(), monthStart.getDate() - 6));
 
-  // Per-order workers: their gains come from the Production Sheet, keyed by profile.
   const pieceProfileIds = employees
     .filter((e) => e.payment_method === 'PIECE_BASED')
     .map((e) => e.profile_id as string);
 
-  const [{ data: rates }, { data: txns }, { data: advances }, { data: logs }] = await Promise.all([
-    service.from('payroll_rates').select('employee_id, rate, rate_kind, effective_from, is_active').in('employee_id', empIds).eq('is_active', true),
-    service.from('financial_transactions').select('id, employee_id, amount, occurred_at, description').in('employee_id', empIds).eq('category', 'PAYROLL_SALARY').order('occurred_at', { ascending: false }),
-    service.from('payroll_advances').select('employee_id, amount, advance_date').in('employee_id', empIds).gte('advance_date', monthStartYmd).lt('advance_date', monthEndYmd),
+  const [{ data: rates }, { data: txns }, { data: logs }] = await Promise.all([
+    service.from('payroll_rates').select('employee_id, rate, rate_kind, is_active').in('employee_id', empIds).eq('is_active', true),
+    // Payroll money given to the worker: Magasin "Employee payroll" expenses
+    // (PAYROLL) and salary settlements (PAYROLL_SALARY).
+    service.from('financial_transactions').select('id, employee_id, amount, occurred_at, description, category').in('employee_id', empIds).in('category', ['PAYROLL', 'PAYROLL_SALARY']).order('occurred_at', { ascending: false }),
     pieceProfileIds.length > 0
       ? service.from('production_logs').select('profile_id, week_start, sheet, row_key, day, qty').in('profile_id', pieceProfileIds).gte('week_start', logsFrom).lt('week_start', monthEndYmd)
       : Promise.resolve({ data: [] as { profile_id: string; week_start: string; sheet: 'MASQUAGE' | 'PREPARATION'; row_key: string; day: number; qty: number }[] }),
   ]);
 
-  // Production Sheet earnings for the month, per worker profile.
-  const sheetEarnByProfile = new Map<string, number>();
+  // Production Sheet entries per profile, with their real calendar date (ms).
+  const sheetEntriesByProfile = new Map<string, { t: number; amt: number }[]>();
   for (const r of logs ?? []) {
     const d = new Date(`${r.week_start}T00:00:00`);
     d.setDate(d.getDate() + Number(r.day));
-    if (d >= monthStart && d < monthEnd) {
-      const rate = PIECE_RATES[r.sheet as 'MASQUAGE' | 'PREPARATION']?.[r.row_key] ?? 0;
-      const key = r.profile_id as string;
-      sheetEarnByProfile.set(key, (sheetEarnByProfile.get(key) ?? 0) + num(r.qty) * rate);
-    }
-  }
-
-  // Advances taken this month, per employee.
-  const advByEmp = new Map<string, number>();
-  for (const a of advances ?? []) {
-    const e = a.employee_id as string;
-    advByEmp.set(e, (advByEmp.get(e) ?? 0) + num(a.amount));
+    const rate = PIECE_RATES[r.sheet as 'MASQUAGE' | 'PREPARATION']?.[r.row_key] ?? 0;
+    const key = r.profile_id as string;
+    const list = sheetEntriesByProfile.get(key) ?? [];
+    list.push({ t: d.getTime(), amt: num(r.qty) * rate });
+    sheetEntriesByProfile.set(key, list);
   }
 
   // Latest active rate per employee by kind.
@@ -100,50 +91,57 @@ export async function getSalaryOverviews(): Promise<Map<string, PayInfo>> {
   for (const r of rates ?? []) {
     const e = r.employee_id as string;
     const m = rateByEmp.get(e) ?? new Map<string, number>();
-    // rows already filtered active; keep the first seen per kind (order not guaranteed) — take max effective_from
-    const key = r.rate_kind as string;
-    m.set(key, num(r.rate));
+    m.set(r.rate_kind as string, num(r.rate));
     rateByEmp.set(e, m);
   }
 
   const map = new Map<string, PayInfo>();
   for (const e of employees) {
     const id = e.id as string;
+    const profileId = e.profile_id as string;
     const method = e.payment_method as PayInfo['method'];
-    const { start, label } = periodStart(method);
+    const { start: pStart, label } = periodStart(method);
     const kind = method === 'PIECE_BASED' ? 'PIECE' : method;
 
-    // Gains for the period. Per-order workers earn from their Production Sheet.
+    const settledAt = e.last_settled_at ? new Date(e.last_settled_at as string) : null;
+    const settledThisPeriod = settledAt !== null && settledAt >= pStart;
+    // Everything from here on counts toward the current (open) cycle.
+    const cycleStart = settledThisPeriod ? (settledAt as Date) : pStart;
+
+    // Gains for the open cycle.
     let gains: number;
     if (method === 'PIECE_BASED') {
-      gains = sheetEarnByProfile.get(e.profile_id as string) ?? 0;
+      gains = (sheetEntriesByProfile.get(profileId) ?? [])
+        .filter((x) => x.t >= cycleStart.getTime())
+        .reduce((s, x) => s + x.amt, 0);
     } else {
-      gains = rateByEmp.get(id)?.get(kind) ?? 0;
+      // Fixed-rate wage: owed once per period, cleared once settled in it.
+      gains = settledThisPeriod ? 0 : (rateByEmp.get(id)?.get(kind) ?? 0);
     }
 
-    // Paid within the period + full history.
+    // Money given this cycle + settlement-payment history (for receipts).
     const empTx = (txns ?? []).filter((t) => t.employee_id === id);
-    const paid = empTx
-      .filter((t) => new Date(t.occurred_at as string) >= start)
+    const advance = empTx
+      .filter((t) => new Date(t.occurred_at as string) >= cycleStart)
       .reduce((s, t) => s + num(t.amount), 0);
-    const history: SalaryPayment[] = empTx.slice(0, 12).map((t) => ({
-      id: t.id as string,
-      amount: num(t.amount),
-      date: (t.occurred_at as string).slice(0, 10),
-      note: (t.description as string) ?? null,
-    }));
+    const history: SalaryPayment[] = empTx
+      .filter((t) => t.category === 'PAYROLL_SALARY')
+      .slice(0, 12)
+      .map((t) => ({
+        id: t.id as string,
+        amount: num(t.amount),
+        date: (t.occurred_at as string).slice(0, 10),
+        note: (t.description as string) ?? null,
+      }));
 
-    const advancesTaken = advByEmp.get(id) ?? 0;
-
-    map.set(e.profile_id as string, {
+    map.set(profileId, {
       employeeId: id,
       name: e.full_name as string,
       method,
       periodLabel: label,
       gains,
-      paid,
-      advances: advancesTaken,
-      remaining: gains - paid - advancesTaken,
+      advance,
+      remaining: gains - advance,
       history,
     });
   }
