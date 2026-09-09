@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import { createOrder, type CreateOrderState } from '@/lib/orders/actions';
+import { COATING_OPTIONS } from '@/lib/validation/order';
 import { Button } from '@/components/ui/Button';
 import { formatAmount } from '@/lib/utils';
 import { useLocale } from '@/lib/i18n/LocaleProvider';
@@ -185,6 +186,14 @@ export function OrderForm({ products = [], agents = [] }: { products?: OrderProd
             />
           </Field>
         </div>
+        <Field label={tr(locale, 'Coating', 'التغطية')} htmlFor="coating" error={fe.coating}>
+          <select id="coating" name="coating" defaultValue="" className={inputCls} required>
+            <option value="" disabled>{tr(locale, 'Choose a coating…', 'اختر التغطية…')}</option>
+            {COATING_OPTIONS.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </Field>
         <Field label={tr(locale, 'Reference image', 'الصورة المرجعية')} htmlFor="image" hint={tr(locale, 'JPEG, PNG or WEBP · max 5 MB', 'JPEG أو PNG أو WEBP · بحد أقصى 5 ميغابايت')}>
           <input
             id="image"

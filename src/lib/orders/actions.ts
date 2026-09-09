@@ -37,6 +37,7 @@ export async function createOrder(
     cakeSizeCm: formData.get('cakeSizeCm'),
     description: formData.get('description') ?? '',
     fourage: formData.get('fourage') ?? '',
+    coating: formData.get('coating') ?? '',
     deliveryDate: formData.get('deliveryDate'),
     deliveryTime: formData.get('deliveryTime'),
     deliveryRequired: formData.get('deliveryRequired') === 'on',
@@ -119,9 +120,10 @@ export async function createOrder(
   // Link the chosen catalog product + store the fourage note (service client:
   // the caller passed orders.create, but the update policy needs orders.edit).
   const productId = String(formData.get('productId') ?? '');
-  const patch: { product_id?: string; fourage?: string | null } = {};
+  const patch: { product_id?: string; fourage?: string | null; coating?: string } = {};
   if (productId) patch.product_id = productId;
   if (input.fourage) patch.fourage = input.fourage;
+  patch.coating = input.coating;
   if (created?.id && Object.keys(patch).length > 0) {
     await createServiceClient().from('orders').update(patch).eq('id', created.id);
   }
@@ -387,6 +389,7 @@ export async function updateOrder(
     cakeSizeCm: formData.get('cakeSizeCm'),
     description: formData.get('description') ?? '',
     fourage: formData.get('fourage') ?? '',
+    coating: formData.get('coating') ?? '',
     deliveryDate: formData.get('deliveryDate'),
     deliveryTime: formData.get('deliveryTime'),
     deliveryRequired: formData.get('deliveryRequired') === 'on',
@@ -410,6 +413,7 @@ export async function updateOrder(
       cake_size_cm: input.cakeSizeCm,
       description: input.description,
       fourage: input.fourage || null,
+      coating: input.coating,
       delivery_date: input.deliveryDate,
       delivery_time: input.deliveryTime,
       delivery_required: input.deliveryRequired,

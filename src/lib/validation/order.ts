@@ -3,6 +3,9 @@ import { z } from 'zod';
 export const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
 
+/** Cake coating / finish — one must be chosen on every order. */
+export const COATING_OPTIONS = ['Pâte à Sucre', 'Ganache', 'Voulaire', 'Crème Chantilly'] as const;
+
 /**
  * Order creation input. Shared by the client form and the server action so
  * validation rules live in one place. Server validation is authoritative and is
@@ -18,6 +21,7 @@ export const CreateOrderSchema = z
       .max(1000, 'Size looks too large'),
     description: z.string().trim().max(2000).optional().default(''),
     fourage: z.string().trim().max(500).optional().default(''),
+    coating: z.enum(COATING_OPTIONS, { message: 'Choose a coating' }),
     deliveryDate: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Choose a delivery date'),
@@ -49,6 +53,7 @@ export const OperationalOrderSchema = z.object({
     .max(1000, 'Size looks too large'),
   description: z.string().trim().max(2000).optional().default(''),
   fourage: z.string().trim().max(500).optional().default(''),
+  coating: z.enum(COATING_OPTIONS, { message: 'Choose a coating' }),
   deliveryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Choose a delivery date'),
   deliveryTime: z.string().regex(/^\d{2}:\d{2}$/, 'Choose a delivery time'),
   deliveryRequired: z.boolean().default(false),

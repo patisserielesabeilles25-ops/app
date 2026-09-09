@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import { updateOrder, type UpdateOrderState } from '@/lib/orders/actions';
+import { COATING_OPTIONS } from '@/lib/validation/order';
 import { Button, LinkButton } from '@/components/ui/Button';
 import { formatAmount } from '@/lib/utils';
 import { useLocale } from '@/lib/i18n/LocaleProvider';
@@ -19,6 +20,7 @@ export type OrderDefaults = {
   cakeSizeCm: number;
   description: string;
   fourage: string;
+  coating: string;
   deliveryDate: string;
   deliveryTime: string;
   deliveryRequired: boolean;
@@ -126,6 +128,14 @@ export function EditOrderForm({
         <h2 className="text-sm font-semibold text-neutral-800">{tr(locale, 'Cake', 'الكعكة')}</h2>
         <Field label={tr(locale, 'Size (cm)', 'الحجم (سم)')} htmlFor="cakeSizeCm" error={fe.cakeSizeCm}>
           <input id="cakeSizeCm" name="cakeSizeCm" type="number" step="0.5" min="0" defaultValue={defaults.cakeSizeCm} className={inputCls} required />
+        </Field>
+        <Field label={tr(locale, 'Coating', 'التغطية')} htmlFor="coating" error={fe.coating}>
+          <select id="coating" name="coating" defaultValue={defaults.coating} className={inputCls} required>
+            <option value="" disabled>{tr(locale, 'Choose a coating…', 'اختر التغطية…')}</option>
+            {COATING_OPTIONS.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
         </Field>
         <Field label={tr(locale, 'Fourrage (extra / modified ingredient)', 'الحشوة (مكوّن إضافي / تعديل)')} htmlFor="fourage" error={fe.fourage}>
           <input id="fourage" name="fourage" defaultValue={defaults.fourage} className={inputCls} placeholder={tr(locale, 'e.g. extra chocolate filling, no nuts…', 'مثال: حشوة شوكولاتة إضافية، بدون مكسرات…')} />
