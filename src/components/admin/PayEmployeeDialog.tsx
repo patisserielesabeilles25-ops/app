@@ -66,7 +66,7 @@ export function PayEmployeeDialog({ info }: { info: PayInfo }) {
                 <span className="font-semibold text-neutral-800">{formatAmount(info.gains)} DA</span>
               </div>
               <div className="flex justify-between py-0.5">
-                <span className="text-neutral-500">{tr(locale, 'Déjà payé', 'المدفوع مسبقًا')}</span>
+                <span className="text-neutral-500">{tr(locale, 'Avance', 'السلفة')}</span>
                 <span className="font-semibold text-emerald-600">{formatAmount(info.paid)} DA</span>
               </div>
               {info.advances > 0 ? (
