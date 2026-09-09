@@ -37,7 +37,7 @@ export default async function EditOrderPage({
               id: order.id,
               customerName: order.customer_name,
               customerPhone: order.customer_phone,
-              cakeSizeCm: order.cake_size_cm,
+              cakeSizeCm: order.size_label ?? String(order.cake_size_cm),
               description: order.description ?? '',
               fourage: order.fourage ?? '',
               coating: order.coating ?? '',

@@ -15,10 +15,7 @@ export const CreateOrderSchema = z
   .object({
     customerName: z.string().trim().min(1, 'Customer name is required').max(120),
     customerPhone: z.string().trim().min(4, 'Enter a valid phone number').max(30),
-    cakeSizeCm: z.coerce
-      .number({ message: 'Enter the cake size' })
-      .positive('Size must be greater than 0')
-      .max(1000, 'Size looks too large'),
+    cakeSizeCm: z.string().trim().min(1, 'Enter the cake size').max(120),
     description: z.string().trim().max(2000).optional().default(''),
     fourage: z.string().trim().max(500).optional().default(''),
     coating: z.enum(COATING_OPTIONS, { message: 'Choose a coating' }),
@@ -47,10 +44,7 @@ export type CreateOrderInput = z.infer<typeof CreateOrderSchema>;
 export const OperationalOrderSchema = z.object({
   customerName: z.string().trim().min(1, 'Customer name is required').max(120),
   customerPhone: z.string().trim().min(4, 'Enter a valid phone number').max(30),
-  cakeSizeCm: z.coerce
-    .number({ message: 'Enter the cake size' })
-    .positive('Size must be greater than 0')
-    .max(1000, 'Size looks too large'),
+  cakeSizeCm: z.string().trim().min(1, 'Enter the cake size').max(120),
   description: z.string().trim().max(2000).optional().default(''),
   fourage: z.string().trim().max(500).optional().default(''),
   coating: z.enum(COATING_OPTIONS, { message: 'Choose a coating' }),

@@ -24,6 +24,8 @@ export type CalendarOrder = {
   fourage: string | null;
   /** Cake coating/finish (colour-coded in the UI). */
   coating: string | null;
+  /** Free-text cake size for display. */
+  size_label: string | null;
   /** Reference image metadata (binary lives in Storage). Sign a URL to display. */
   image: { bucket: string; object_path: string } | null;
 };
@@ -46,7 +48,7 @@ export async function getMonthOrders(
   const { data } = await supabase
     .from('orders')
     .select(
-      'id, order_number, customer_name, delivery_date, delivery_time, cake_size_cm, production_status, delivery_status, fulfillment, returned_at, reported_at, production_stage, fourage, coating, order_images(bucket, object_path)',
+      'id, order_number, customer_name, delivery_date, delivery_time, cake_size_cm, production_status, delivery_status, fulfillment, returned_at, reported_at, production_stage, fourage, coating, size_label, order_images(bucket, object_path)',
     )
     .gte('delivery_date', start)
     .lt('delivery_date', end)

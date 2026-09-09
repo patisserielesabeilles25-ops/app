@@ -38,13 +38,16 @@ function Field({
   );
 }
 
-export type OrderProductOption = { id: string; name: string | null; diameter: number | null; price: number };
+export type OrderProductOption = { id: string; name: string | null; diameter: number | null; sizeLabel: string | null; price: number };
 export type OrderAgentOption = { id: string; name: string };
+
+const productSize = (p: OrderProductOption) =>
+  p.sizeLabel?.trim() || (p.diameter != null ? `⌀ ${p.diameter} cm` : null);
 
 const productLabel = (p: OrderProductOption) =>
   [
-    p.name || (p.diameter != null ? `⌀ ${p.diameter} cm` : 'Produit'),
-    p.diameter != null ? `⌀${p.diameter}cm` : null,
+    p.name || productSize(p) || 'Produit',
+    productSize(p),
     p.price > 0 ? `${formatAmount(p.price)} DA` : null,
   ]
     .filter(Boolean)
@@ -62,13 +65,13 @@ export function OrderForm({ products = [], agents = [] }: { products?: OrderProd
   const [productId, setProductId] = useState('');
   const [cakeSize, setCakeSize] = useState('');
 
-  const selectedProduct = products.find((p) => p.id === productId);
-
   const onProduct = (id: string) => {
     setProductId(id);
     const p = products.find((x) => x.id === id);
     if (p) {
-      if (p.diameter != null) setCakeSize(String(p.diameter)); // auto-fill size from diameter
+      // Auto-fill the size from the product's free-text size or numeric diameter.
+      const s = p.sizeLabel?.trim() || (p.diameter != null ? String(p.diameter) : '');
+      if (s) setCakeSize(s);
       if (p.price > 0 && !total) setTotal(String(p.price)); // prefill total (only if empty)
     }
   };
@@ -168,20 +171,19 @@ export function OrderForm({ products = [], agents = [] }: { products?: OrderProd
             </select>
           </Field>
           <Field
-            label={tr(locale, 'Cake size (cm)', 'حجم الكعكة (سم)')}
+            label={tr(locale, 'Cake size', 'حجم الكعكة')}
             htmlFor="cakeSizeCm"
             error={fe.cakeSizeCm}
-            hint={selectedProduct && selectedProduct.diameter == null ? tr(locale, 'This product has no set size — enter it.', 'هذا المنتج بدون حجم محدد — أدخله.') : undefined}
+            hint={tr(locale, 'Any value: 20, Mini, 1/2 plateau…', 'أي قيمة: 20، ميني، نصف بلاطو…')}
           >
             <input
               id="cakeSizeCm"
               name="cakeSizeCm"
-              type="number"
-              step="0.5"
-              min="0"
+              type="text"
               value={cakeSize}
               onChange={(e) => setCakeSize(e.target.value)}
               className={inputCls}
+              placeholder={tr(locale, 'e.g. 20, Mini, 1/2 plateau…', 'مثال: 20، ميني، نصف بلاطو…')}
               required
             />
           </Field>

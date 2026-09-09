@@ -47,6 +47,7 @@ export default async function MagasinPage({
     id: p.id,
     name: p.name,
     diameter: p.diameter_cm,
+    sizeLabel: p.size_label,
     price: p.selling_price,
   }));
   const expenseCategories = categories

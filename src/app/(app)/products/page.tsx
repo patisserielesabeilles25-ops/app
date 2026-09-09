@@ -79,7 +79,8 @@ export default async function ProductsPage({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {withPhotos.map((p) => {
-            const label = p.name || (p.diameter_cm != null ? `⌀ ${p.diameter_cm} cm` : tr(locale, 'Product', 'منتج'));
+            const sizeText = p.size_label?.trim() || (p.diameter_cm != null ? `⌀ ${p.diameter_cm} cm` : null);
+            const label = p.name || sizeText || tr(locale, 'Product', 'منتج');
             const margin = p.selling_price - p.purchase_price;
             const hasPrices = p.purchase_price > 0 || p.selling_price > 0;
             return (
@@ -96,9 +97,9 @@ export default async function ProductsPage({
                 <div className="flex flex-1 flex-col p-4">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-semibold text-neutral-800">{label}</h3>
-                    {p.diameter_cm != null ? (
+                    {sizeText ? (
                       <span className="shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-600">
-                        ⌀ {p.diameter_cm} cm
+                        {sizeText}
                       </span>
                     ) : null}
                   </div>

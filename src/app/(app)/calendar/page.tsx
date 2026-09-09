@@ -10,6 +10,7 @@ import { ImageZoom } from '@/components/orders/ImageZoom';
 import { CoatingDot } from '@/components/orders/CoatingDot';
 import { orderCanonicalStatus } from '@/lib/statuses/derive';
 import { cn, formatDate, formatTime } from '@/lib/utils';
+import { sizeDisplay } from '@/lib/size';
 import { tr } from '@/lib/i18n/t';
 import { getLocale } from '@/lib/i18n/server';
 
@@ -230,7 +231,7 @@ export default async function CalendarPage({
                             <span className="text-neutral-300">—</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-neutral-600">{o.cake_size_cm} cm</td>
+                        <td className="px-4 py-3 text-neutral-600">{sizeDisplay(o.size_label, o.cake_size_cm)}</td>
                         <td className="px-4 py-3">
                           <CanonicalStatusBadge statusKey={orderCanonicalStatus(o)} />
                         </td>

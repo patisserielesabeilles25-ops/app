@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/StatusBadge';
 import { orderCanonicalStatus } from '@/lib/statuses/derive';
 import { formatAmount, formatDate, formatTime, formatDateTime } from '@/lib/utils';
+import { sizeDisplay } from '@/lib/size';
 import { getLocale } from '@/lib/i18n/server';
 import { tr } from '@/lib/i18n/t';
 
@@ -283,7 +284,7 @@ export default async function OrderDetailPage({
               <div className="divide-y divide-neutral-100">
                 <Row label={tr(locale, 'Customer', 'العميل')} value={order.customer_name} />
                 <Row label={tr(locale, 'Phone', 'الهاتف')} value={order.customer_phone} />
-                <Row label={tr(locale, 'Cake size', 'حجم الكعكة')} value={`${order.cake_size_cm} cm`} />
+                <Row label={tr(locale, 'Cake size', 'حجم الكعكة')} value={sizeDisplay(order.size_label, order.cake_size_cm)} />
                 {order.coating ? <Row label={tr(locale, 'Coating', 'التغطية')} value={order.coating} /> : null}
                 <Row label={tr(locale, 'Delivery date', 'تاريخ التوصيل')} value={formatDate(order.delivery_date)} />
                 <Row label={tr(locale, 'Delivery time', 'وقت التوصيل')} value={formatTime(order.delivery_time)} />

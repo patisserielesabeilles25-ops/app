@@ -17,7 +17,7 @@ export type OrderDefaults = {
   id: string;
   customerName: string;
   customerPhone: string;
-  cakeSizeCm: number;
+  cakeSizeCm: string;
   description: string;
   fourage: string;
   coating: string;
@@ -126,8 +126,8 @@ export function EditOrderForm({
 
       <section className="space-y-4">
         <h2 className="text-sm font-semibold text-neutral-800">{tr(locale, 'Cake', 'الكعكة')}</h2>
-        <Field label={tr(locale, 'Size (cm)', 'الحجم (سم)')} htmlFor="cakeSizeCm" error={fe.cakeSizeCm}>
-          <input id="cakeSizeCm" name="cakeSizeCm" type="number" step="0.5" min="0" defaultValue={defaults.cakeSizeCm} className={inputCls} required />
+        <Field label={tr(locale, 'Cake size', 'حجم الكعكة')} htmlFor="cakeSizeCm" error={fe.cakeSizeCm}>
+          <input id="cakeSizeCm" name="cakeSizeCm" type="text" defaultValue={defaults.cakeSizeCm} className={inputCls} placeholder={tr(locale, 'e.g. 20, Mini, 1/2 plateau…', 'مثال: 20، ميني، نصف بلاطو…')} required />
         </Field>
         <Field label={tr(locale, 'Coating', 'التغطية')} htmlFor="coating" error={fe.coating}>
           <select id="coating" name="coating" defaultValue={defaults.coating} className={inputCls} required>

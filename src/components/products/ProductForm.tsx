@@ -19,6 +19,7 @@ type Product = {
   id: string;
   name: string | null;
   diameter_cm: number | null;
+  size_label: string | null;
 };
 
 export function ProductForm({
@@ -61,20 +62,18 @@ export function ProductForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="diameterCm" className="text-sm font-medium text-neutral-700">
-          {tr(locale, 'Diameter (cm)', 'القطر (سم)')} <span className="font-normal text-neutral-400">{tr(locale, '(optional)', '(اختياري)')}</span>
+        <label htmlFor="sizeLabel" className="text-sm font-medium text-neutral-700">
+          {tr(locale, 'Size', 'الحجم')} <span className="font-normal text-neutral-400">{tr(locale, '(optional)', '(اختياري)')}</span>
         </label>
         <input
-          id="diameterCm"
-          name="diameterCm"
-          type="number"
-          step="0.1"
-          min="0"
-          defaultValue={product?.diameter_cm ?? ''}
-          placeholder={tr(locale, 'Leave empty if not applicable', 'اتركه فارغًا إن لم يكن مناسبًا')}
+          id="sizeLabel"
+          name="sizeLabel"
+          type="text"
+          defaultValue={product?.size_label ?? (product?.diameter_cm != null ? String(product.diameter_cm) : '')}
+          placeholder={tr(locale, 'Any value: 20, Mini, 1/2 plateau…', 'أي قيمة: 20، ميني، نصف بلاطو…')}
           className={inputCls}
         />
-        {fe.diameterCm ? <p className="text-xs text-amber-600">{fe.diameterCm}</p> : null}
+        {fe.sizeLabel ? <p className="text-xs text-amber-600">{fe.sizeLabel}</p> : null}
       </div>
 
       <div className="flex flex-col gap-1.5">

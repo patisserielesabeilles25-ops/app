@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ProductionStatusBadge, DeliveryStatusBadge } from '@/components/ui/StatusBadge';
 import { formatAmount, formatTime } from '@/lib/utils';
+import { sizeDisplay } from '@/lib/size';
 import { getLocale } from '@/lib/i18n/server';
 import { tr } from '@/lib/i18n/t';
 
@@ -99,7 +100,7 @@ export default async function DashboardPage() {
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-neutral-700">{o.customer_name}</td>
-                    <td className="px-4 py-3 text-neutral-600">{o.cake_size_cm} cm</td>
+                    <td className="px-4 py-3 text-neutral-600">{sizeDisplay(o.size_label, o.cake_size_cm)}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1.5">
                         <ProductionStatusBadge status={o.production_status} />

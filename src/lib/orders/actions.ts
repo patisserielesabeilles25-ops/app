@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { requirePermission, getMyPermissions } from '@/lib/auth/permissions';
 import { ensureAgentEmployeeId } from '@/lib/agents/resolve';
+import { parseSizeNumber } from '@/lib/size';
 import {
   CreateOrderSchema,
   OperationalOrderSchema,
@@ -90,7 +91,7 @@ export async function createOrder(
   const { data, error } = await supabase.rpc('create_order', {
     p_customer_name: input.customerName,
     p_customer_phone: input.customerPhone,
-    p_cake_size_cm: input.cakeSizeCm,
+    p_cake_size_cm: parseSizeNumber(input.cakeSizeCm) ?? 1,
     p_description: input.description,
     p_delivery_date: input.deliveryDate,
     p_delivery_time: input.deliveryTime,
@@ -120,10 +121,11 @@ export async function createOrder(
   // Link the chosen catalog product + store the fourage note (service client:
   // the caller passed orders.create, but the update policy needs orders.edit).
   const productId = String(formData.get('productId') ?? '');
-  const patch: { product_id?: string; fourage?: string | null; coating?: string } = {};
+  const patch: { product_id?: string; fourage?: string | null; coating?: string; size_label?: string } = {};
   if (productId) patch.product_id = productId;
   if (input.fourage) patch.fourage = input.fourage;
   patch.coating = input.coating;
+  patch.size_label = input.cakeSizeCm;
   if (created?.id && Object.keys(patch).length > 0) {
     await createServiceClient().from('orders').update(patch).eq('id', created.id);
   }
@@ -416,7 +418,8 @@ export async function updateOrder(
     .update({
       customer_name: input.customerName,
       customer_phone: input.customerPhone,
-      cake_size_cm: input.cakeSizeCm,
+      cake_size_cm: parseSizeNumber(input.cakeSizeCm) ?? 1,
+      size_label: input.cakeSizeCm,
       description: input.description,
       fourage: input.fourage || null,
       coating: input.coating,

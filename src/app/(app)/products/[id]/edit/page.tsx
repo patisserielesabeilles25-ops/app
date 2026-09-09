@@ -46,6 +46,7 @@ export default async function EditProductPage({
               id: product.id,
               name: product.name,
               diameter_cm: product.diameter_cm,
+              size_label: product.size_label,
             }}
             photoUrl={photoUrl}
           />

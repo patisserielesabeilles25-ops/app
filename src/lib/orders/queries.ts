@@ -29,6 +29,7 @@ export type OrderListRow = {
   customer_id: string | null;
   fourage: string | null;
   coating: string | null;
+  size_label: string | null;
   remaining?: number;
   product_name: string | null;
   image_url: string | null;
@@ -37,7 +38,7 @@ export type OrderListRow = {
 };
 
 const LIST_COLUMNS =
-  'id, order_number, customer_id, customer_name, customer_phone, cake_size_cm, delivery_date, delivery_time, production_status, delivery_status, fulfillment, returned_at, reported_at, production_stage, custom_status_id, fourage, coating';
+  'id, order_number, customer_id, customer_name, customer_phone, cake_size_cm, delivery_date, delivery_time, production_status, delivery_status, fulfillment, returned_at, reported_at, production_stage, custom_status_id, fourage, coating, size_label';
 
 /** Remove characters that would break a PostgREST or()/ilike filter. */
 function sanitize(term: string): string {
@@ -163,6 +164,7 @@ export type OrderDetail = {
     customer_name: string;
     customer_phone: string;
     cake_size_cm: number;
+    size_label: string | null;
     description: string | null;
     fourage: string | null;
     coating: string | null;
@@ -198,7 +200,7 @@ export async function getOrderDetail(id: string): Promise<OrderDetail> {
   const { data: order } = await supabase
     .from('orders')
     .select(
-      'id, order_number, customer_name, customer_phone, cake_size_cm, description, fourage, coating, delivery_date, delivery_time, delivery_required, fulfillment, production_status, production_stage, delivery_status, sent_to_lab_at, ready_at, returned_at, return_reason, reported_at, report_reason, created_at, created_by',
+      'id, order_number, customer_name, customer_phone, cake_size_cm, size_label, description, fourage, coating, delivery_date, delivery_time, delivery_required, fulfillment, production_status, production_stage, delivery_status, sent_to_lab_at, ready_at, returned_at, return_reason, reported_at, report_reason, created_at, created_by',
     )
     .eq('id', id)
     .maybeSingle();

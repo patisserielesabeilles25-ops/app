@@ -13,13 +13,14 @@ const initial: MagasinState = {};
 const inputCls =
   'w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none transition focus:border-amber-400 focus:ring-2 focus:ring-amber-100';
 
-export type ProductOption = { id: string; name: string | null; diameter: number | null; price: number };
+export type ProductOption = { id: string; name: string | null; diameter: number | null; sizeLabel: string | null; price: number };
 type Row = { productId: string; name: string; qty: string; price: string };
 const emptyRow = (): Row => ({ productId: '', name: '', qty: '1', price: '' });
 
-const displayName = (p: ProductOption) => p.name || (p.diameter != null ? `⌀ ${p.diameter} cm` : 'Produit');
+const sizeOf = (p: ProductOption) => p.sizeLabel?.trim() || (p.diameter != null ? `⌀ ${p.diameter} cm` : null);
+const displayName = (p: ProductOption) => p.name || sizeOf(p) || 'Produit';
 const optionLabel = (p: ProductOption) =>
-  [displayName(p), p.diameter != null ? `⌀${p.diameter}cm` : null, p.price > 0 ? `${formatAmount(p.price)} DA` : null]
+  [displayName(p), sizeOf(p), p.price > 0 ? `${formatAmount(p.price)} DA` : null]
     .filter(Boolean)
     .join(' · ');
 

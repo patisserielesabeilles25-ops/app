@@ -55,6 +55,7 @@ export type TodayOrder = {
   customer_name: string;
   delivery_time: string;
   cake_size_cm: number;
+  size_label: string | null;
   production_status: ProductionStatus;
   delivery_status: DeliveryStatus | null;
   fulfillment: Fulfillment;
@@ -64,7 +65,7 @@ export async function getTodayOrders(): Promise<TodayOrder[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from('orders')
-    .select('id, order_number, customer_name, delivery_time, cake_size_cm, production_status, delivery_status, fulfillment')
+    .select('id, order_number, customer_name, delivery_time, cake_size_cm, size_label, production_status, delivery_status, fulfillment')
     .eq('delivery_date', today())
     .order('delivery_time', { ascending: true });
   return (data ?? []) as TodayOrder[];

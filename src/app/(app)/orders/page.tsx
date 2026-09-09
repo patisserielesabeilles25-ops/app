@@ -20,6 +20,7 @@ import {
 import { CANONICAL_STATUSES } from '@/lib/statuses/constants';
 import { orderCanonicalStatus } from '@/lib/statuses/derive';
 import { formatDate, formatTime, formatAmount, waNumber, cn } from '@/lib/utils';
+import { sizeDisplay } from '@/lib/size';
 import { getLocale } from '@/lib/i18n/server';
 import { tr } from '@/lib/i18n/t';
 
@@ -240,7 +241,7 @@ export default async function OrdersPage({
                       <span className="text-neutral-300">—</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-neutral-600">{o.cake_size_cm} cm</td>
+                  <td className="px-4 py-3 text-neutral-600">{sizeDisplay(o.size_label, o.cake_size_cm)}</td>
                   <td className="px-4 py-3">
                     <FulfillmentBadge value={o.fulfillment} />
                   </td>

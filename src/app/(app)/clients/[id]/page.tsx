@@ -14,6 +14,7 @@ import {
   FulfillmentBadge,
 } from '@/components/ui/StatusBadge';
 import { formatDate, formatTime } from '@/lib/utils';
+import { sizeDisplay } from '@/lib/size';
 import { getLocale } from '@/lib/i18n/server';
 import { tr } from '@/lib/i18n/t';
 
@@ -118,7 +119,7 @@ export default async function ClientDetailPage({
                             {formatDate(o.delivery_date)}
                             <span className="text-neutral-400"> · {formatTime(o.delivery_time)}</span>
                           </td>
-                          <td className="px-2 py-2.5 text-neutral-600">{o.cake_size_cm} cm</td>
+                          <td className="px-2 py-2.5 text-neutral-600">{sizeDisplay(o.size_label, o.cake_size_cm)}</td>
                           <td className="px-2 py-2.5">
                             <div className="flex flex-wrap gap-1.5">
                               {o.returned_at ? (

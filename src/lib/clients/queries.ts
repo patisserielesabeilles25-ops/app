@@ -60,6 +60,7 @@ export type ClientOrderRow = {
   id: string;
   order_number: string;
   cake_size_cm: number;
+  size_label: string | null;
   delivery_date: string;
   delivery_time: string;
   fulfillment: Fulfillment;
@@ -73,7 +74,7 @@ export async function getClientOrders(customerId: string): Promise<ClientOrderRo
   const { data } = await supabase
     .from('orders')
     .select(
-      'id, order_number, cake_size_cm, delivery_date, delivery_time, fulfillment, production_status, delivery_status, returned_at',
+      'id, order_number, cake_size_cm, size_label, delivery_date, delivery_time, fulfillment, production_status, delivery_status, returned_at',
     )
     .eq('customer_id', customerId)
     .order('delivery_date', { ascending: false })

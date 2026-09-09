@@ -11,6 +11,7 @@ import {
   ACCEPTED_IMAGE_TYPES,
   MAX_IMAGE_BYTES,
 } from '@/lib/validation/product';
+import { parseSizeNumber } from '@/lib/size';
 
 export type ProductFormState = {
   error?: string;
@@ -26,7 +27,7 @@ function safeName(name: string): string {
 function parse(formData: FormData) {
   return ProductSchema.safeParse({
     name: formData.get('name') ?? '',
-    diameterCm: formData.get('diameterCm'),
+    sizeLabel: formData.get('sizeLabel') ?? '',
     purchasePrice: formData.get('purchasePrice') || 0,
     sellingPrice: formData.get('sellingPrice') || 0,
   });
@@ -82,7 +83,8 @@ export async function createProduct(
   const supabase = await createClient();
   const { error } = await supabase.from('products').insert({
     name: input.name ? input.name : null,
-    diameter_cm: input.diameterCm,
+    size_label: input.sizeLabel ? input.sizeLabel : null,
+    diameter_cm: parseSizeNumber(input.sizeLabel),
     purchase_price: input.purchasePrice,
     selling_price: input.sellingPrice,
     photo_bucket: photoPath ? BUCKET : null,
@@ -145,7 +147,8 @@ export async function updateProduct(
     .from('products')
     .update({
       name: input.name ? input.name : null,
-      diameter_cm: input.diameterCm,
+      size_label: input.sizeLabel ? input.sizeLabel : null,
+      diameter_cm: parseSizeNumber(input.sizeLabel),
       purchase_price: input.purchasePrice,
       selling_price: input.sellingPrice,
       photo_bucket: photoBucket,

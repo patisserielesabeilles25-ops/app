@@ -7,6 +7,7 @@ export type ProductRow = {
   id: string;
   name: string | null;
   diameter_cm: number | null;
+  size_label: string | null;
   purchase_price: number;
   selling_price: number;
   photo_bucket: string | null;
@@ -15,7 +16,7 @@ export type ProductRow = {
 };
 
 const COLUMNS =
-  'id, name, diameter_cm, purchase_price, selling_price, photo_bucket, photo_path, created_at';
+  'id, name, diameter_cm, size_label, purchase_price, selling_price, photo_bucket, photo_path, created_at';
 
 /** Remove characters that would break a PostgREST or()/ilike filter. */
 function sanitize(term: string): string {
