@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-export const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
+export const MAX_IMAGE_BYTES = 50 * 1024 * 1024; // 50 MB
 
 /** Cake coating / finish — one must be chosen on every order. */
 export const COATING_OPTIONS = ['Pâte à Sucre', 'Ganache', 'Voulaire', 'Crème Chantilly'] as const;

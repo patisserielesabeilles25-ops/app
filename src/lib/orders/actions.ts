@@ -26,6 +26,35 @@ function safeName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-80);
 }
 
+/**
+ * Mint a short-lived signed URL so the browser can upload a reference image
+ * DIRECTLY to Storage, instead of streaming it through this server action.
+ * Server actions run as serverless functions whose request body Vercel caps at
+ * ~4.5 MB, so routing large photos through them fails in production; a direct
+ * upload lets us accept files up to MAX_IMAGE_BYTES (50 MB). The caller then
+ * passes the returned `path` to createOrder.
+ */
+export async function createOrderImageUploadUrl(
+  mime: string,
+  size: number,
+  name: string,
+): Promise<{ path: string; token: string } | { error: string }> {
+  await requirePermission('orders.create');
+  if (!ACCEPTED_IMAGE_TYPES.includes(mime)) {
+    return { error: 'Image must be JPEG, PNG, or WEBP.' };
+  }
+  if (!(size > 0)) return { error: 'The selected file is empty.' };
+  if (size > MAX_IMAGE_BYTES) return { error: 'Image must be 50 MB or smaller.' };
+
+  const service = createServiceClient();
+  const path = `${crypto.randomUUID()}/${safeName(name || 'image')}`;
+  const { data, error } = await service.storage.from(BUCKET).createSignedUploadUrl(path);
+  if (error || !data) {
+    return { error: 'Could not prepare the upload. Please try again.' };
+  }
+  return { path: data.path, token: data.token };
+}
+
 export async function createOrder(
   _prev: CreateOrderState,
   formData: FormData,
@@ -59,28 +88,15 @@ export async function createOrder(
   }
   const input = parsed.data;
 
-  // Optional reference image.
-  const file = formData.get('image');
-  let imagePath: string | null = null;
-  const hasImage = file instanceof File && file.size > 0;
-
-  if (hasImage) {
-    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-      return { error: 'Image must be JPEG, PNG, or WEBP.' };
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
-      return { error: 'Image must be 5 MB or smaller.' };
-    }
-    const service = createServiceClient();
-    const path = `${crypto.randomUUID()}/${safeName(file.name || 'image')}`;
-    const { error: upErr } = await service.storage
-      .from(BUCKET)
-      .upload(path, file, { contentType: file.type, upsert: false });
-    if (upErr) {
-      return { error: `Image upload failed: ${upErr.message}` };
-    }
-    imagePath = path;
-  }
+  // Reference image: already uploaded to Storage directly from the browser via
+  // a signed upload URL (see createOrderImageUploadUrl). We only receive its
+  // path + metadata here, keeping large files off this server action's request
+  // body (which Vercel caps at ~4.5 MB).
+  const imagePath = ((formData.get('imagePath') as string) || '').trim() || null;
+  const imageMime = ((formData.get('imageMime') as string) || '').trim() || null;
+  const imageSizeRaw = formData.get('imageSize');
+  const imageSize = imageSizeRaw ? Number(imageSizeRaw) : null;
+  const hasImage = !!imagePath;
 
   // The chosen agent is an app user; resolve (create on first use) the backing
   // employee so the advance is attributed in Magasin "Today's sales".
@@ -104,8 +120,8 @@ export async function createOrder(
     p_received_by: receivedByEmployee,
     p_image_bucket: imagePath ? BUCKET : null,
     p_image_path: imagePath,
-    p_image_mime: hasImage ? (file as File).type : null,
-    p_image_size: hasImage ? (file as File).size : null,
+    p_image_mime: hasImage ? imageMime : null,
+    p_image_size: hasImage ? imageSize : null,
   });
 
   if (error) {
