@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import { requirePermission, getMyPermissions } from '@/lib/auth/permissions';
 import { getOrderDetail } from '@/lib/orders/queries';
+import { getProducts } from '@/lib/products/queries';
+import { getSignedOrderImageUrl } from '@/lib/orders/images';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardBody } from '@/components/ui/Card';
 import { EditOrderForm } from '@/components/orders/EditOrderForm';
@@ -17,11 +19,23 @@ export default async function EditOrderPage({
   await requirePermission('orders.edit');
   const locale = await getLocale();
   const { id } = await params;
-  const { order, financials } = await getOrderDetail(id);
+  const { order, financials, image } = await getOrderDetail(id);
   if (!order) notFound();
 
   const perms = await getMyPermissions();
   const canFinance = perms.has('finance.view');
+
+  const products = await getProducts({});
+  const productOptions = products.map((p) => ({
+    id: p.id,
+    name: p.name,
+    diameter: p.diameter_cm,
+    sizeLabel: p.size_label,
+    price: p.selling_price,
+  }));
+  const currentImageUrl = image
+    ? await getSignedOrderImageUrl(image.bucket, image.object_path)
+    : null;
 
   return (
     <>
@@ -33,10 +47,13 @@ export default async function EditOrderPage({
         <CardBody>
           <EditOrderForm
             canFinance={canFinance}
+            products={productOptions}
+            currentImageUrl={currentImageUrl}
             defaults={{
               id: order.id,
               customerName: order.customer_name,
               customerPhone: order.customer_phone,
+              productId: order.product_id ?? '',
               cakeSizeCm: order.size_label ?? String(order.cake_size_cm),
               description: order.description ?? '',
               fourage: order.fourage ?? '',

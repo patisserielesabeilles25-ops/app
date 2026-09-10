@@ -183,6 +183,7 @@ export type OrderDetail = {
     report_reason: string | null;
     created_at: string;
     created_by: string | null;
+    product_id: string | null;
   } | null;
   financials: {
     total_amount: number;
@@ -200,7 +201,7 @@ export async function getOrderDetail(id: string): Promise<OrderDetail> {
   const { data: order } = await supabase
     .from('orders')
     .select(
-      'id, order_number, customer_name, customer_phone, cake_size_cm, size_label, description, fourage, coating, delivery_date, delivery_time, delivery_required, fulfillment, production_status, production_stage, delivery_status, sent_to_lab_at, ready_at, returned_at, return_reason, reported_at, report_reason, created_at, created_by',
+      'id, order_number, customer_name, customer_phone, cake_size_cm, size_label, description, fourage, coating, delivery_date, delivery_time, delivery_required, fulfillment, production_status, production_stage, delivery_status, sent_to_lab_at, ready_at, returned_at, return_reason, reported_at, report_reason, created_at, created_by, product_id',
     )
     .eq('id', id)
     .maybeSingle();

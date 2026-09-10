@@ -39,7 +39,11 @@ export async function createOrderImageUploadUrl(
   size: number,
   name: string,
 ): Promise<{ path: string; token: string } | { error: string }> {
-  await requirePermission('orders.create');
+  // Used by both the create and edit forms.
+  const perms = await getMyPermissions();
+  if (!perms.has('orders.create') && !perms.has('orders.edit')) {
+    return { error: 'You are not allowed to upload order images.' };
+  }
   if (!ACCEPTED_IMAGE_TYPES.includes(mime)) {
     return { error: 'Image must be JPEG, PNG, or WEBP.' };
   }
@@ -429,6 +433,8 @@ export async function updateOrder(
   const input = parsed.data;
   const supabase = await createClient();
 
+  const productId = String(formData.get('productId') ?? '').trim();
+
   const { error: orderErr } = await supabase
     .from('orders')
     .update({
@@ -443,10 +449,36 @@ export async function updateOrder(
       delivery_time: input.deliveryTime,
       delivery_required: input.deliveryRequired,
       fulfillment: input.deliveryRequired ? 'DELIVERY' : 'PICKUP',
+      ...(productId ? { product_id: productId } : {}),
     })
     .eq('id', id);
   if (orderErr) {
     return { error: 'Could not update the order.' };
+  }
+
+  // Replace the reference image if a new one was uploaded (directly to Storage
+  // from the browser). Old image rows + objects are removed first.
+  const newImagePath = ((formData.get('imagePath') as string) || '').trim() || null;
+  if (newImagePath) {
+    const newImageMime = ((formData.get('imageMime') as string) || '').trim() || null;
+    const newImageSizeRaw = formData.get('imageSize');
+    const newImageSize = newImageSizeRaw ? Number(newImageSizeRaw) : null;
+    const service = createServiceClient();
+    const { data: olds } = await service
+      .from('order_images')
+      .select('bucket, object_path')
+      .eq('order_id', id);
+    await service.from('order_images').delete().eq('order_id', id);
+    for (const o of olds ?? []) {
+      await service.storage.from(o.bucket).remove([o.object_path]);
+    }
+    await service.from('order_images').insert({
+      order_id: id,
+      bucket: BUCKET,
+      object_path: newImagePath,
+      mime_type: newImageMime,
+      size_bytes: newImageSize,
+    });
   }
 
   // Amounts only when the user holds finance permission (also enforced by RLS).
