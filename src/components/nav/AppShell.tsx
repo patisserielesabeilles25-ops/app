@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, LogOut, ChevronDown } from 'lucide-react';
@@ -27,7 +27,17 @@ export function AppShell({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
   const allowed = new Set(permissions);
+
+  // Close the mobile drawer AFTER the route actually changes. Closing it inside
+  // the link's onClick unmounts the <Link> in the same tick, which races with —
+  // and often cancels — Next's client-side navigation (the tap would just shut
+  // the drawer without navigating). Reacting to the committed pathname avoids
+  // that race entirely.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
   const dict = dictionaries[locale] ?? dictionaries.en;
 
   const sections = NAV_SECTIONS.map((s) => ({
@@ -65,7 +75,9 @@ export function AppShell({
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <Nav sections={sections} onNavigate={() => setMobileOpen(false)} />
+            {/* Do not close on click — the pathname effect closes the drawer
+                once navigation commits, so the link is never unmounted mid-nav. */}
+            <Nav sections={sections} onNavigate={() => {}} />
           </aside>
         </div>
       ) : null}
