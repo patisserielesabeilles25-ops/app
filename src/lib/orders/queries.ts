@@ -58,7 +58,8 @@ export async function getOrders({
   let query = supabase
     .from('orders')
     .select(`${LIST_COLUMNS}, product:products(name, diameter_cm), order_images(bucket, object_path)`)
-    .order('delivery_date', { ascending: true })
+    // Newest first, by when the order was placed (creation time).
+    .order('created_at', { ascending: false })
     .limit(2000);
 
   const term = q ? sanitize(q) : '';
