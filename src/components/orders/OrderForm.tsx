@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useRef, useState } from 'react';
+import { Camera } from 'lucide-react';
 import { createOrder, createOrderImageUploadUrl, type CreateOrderState } from '@/lib/orders/actions';
 import { COATING_OPTIONS, ACCEPTED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/validation/order';
 import { createClient } from '@/lib/supabase/client';
@@ -244,8 +245,22 @@ export function OrderForm({ products = [], agents = [] }: { products?: OrderProd
           </select>
         </Field>
         <Field label={tr(locale, 'Reference image', 'الصورة المرجعية')} htmlFor="image" hint={tr(locale, `JPEG, PNG or WEBP · max ${MAX_IMAGE_MB} MB`, `JPEG أو PNG أو WEBP · بحد أقصى ${MAX_IMAGE_MB} ميغابايت`)}>
-          {/* No `name` on purpose: the file is uploaded directly to Storage on
-              select, so its bytes must NOT be included in the form submission. */}
+          {/* Camera capture — phones/tablets only. Tapping opens the rear
+              camera directly (capture="environment"); ignored on desktop. */}
+          <label className="mb-2 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 hover:bg-neutral-100 lg:hidden">
+            <Camera className="h-4 w-4" />
+            {tr(locale, 'Take a photo', 'التقاط صورة')}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+              onChange={onImageChange}
+              className="hidden"
+            />
+          </label>
+          {/* Choose an existing file/photo. No `name` on purpose: the file is
+              uploaded directly to Storage on select, so its bytes must NOT be
+              included in the form submission. */}
           <input
             id="image"
             type="file"
