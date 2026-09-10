@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
-import { requirePermission } from '@/lib/auth/permissions';
+import { requirePermission, getMyPermissions } from '@/lib/auth/permissions';
 import { requireUser } from '@/lib/auth/session';
 import { writeAudit } from '@/lib/audit/log';
 import { ACCEPTED_FINANCE_TYPES, MAX_FINANCE_BYTES } from '@/lib/validation/finance';
@@ -73,27 +73,31 @@ function safeName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-80);
 }
 
-type UploadResult =
-  | { ok: true; path: string | null; mime: string | null; size: number | null }
-  | { ok: false; error: string };
+/**
+ * Mint a signed URL so the browser can upload a receipt DIRECTLY to Storage,
+ * bypassing the ~4.5 MB server-action body cap Vercel enforces (phone photos
+ * routinely exceed it). The caller then submits the returned path with the form.
+ */
+export async function financeAttachmentUploadUrl(
+  mime: string,
+  size: number,
+  name: string,
+): Promise<{ path: string; token: string } | { error: string }> {
+  const perms = await getMyPermissions();
+  if (!perms.has('finance.income.create') && !perms.has('finance.expense.create')) {
+    return { error: 'You are not allowed to upload receipts.' };
+  }
+  if (!ACCEPTED_FINANCE_TYPES.includes(mime)) {
+    return { error: 'Attachment must be JPEG, PNG, WEBP, or PDF.' };
+  }
+  if (!(size > 0)) return { error: 'The selected file is empty.' };
+  if (size > MAX_FINANCE_BYTES) return { error: 'Attachment must be 50 MB or smaller.' };
 
-async function uploadReceipt(file: FormDataEntryValue | null): Promise<UploadResult> {
-  if (!(file instanceof File) || file.size === 0) {
-    return { ok: true, path: null, mime: null, size: null };
-  }
-  if (!ACCEPTED_FINANCE_TYPES.includes(file.type)) {
-    return { ok: false, error: 'Attachment must be JPEG, PNG, WEBP, or PDF.' };
-  }
-  if (file.size > MAX_FINANCE_BYTES) {
-    return { ok: false, error: 'Attachment must be 5 MB or smaller.' };
-  }
   const service = createServiceClient();
-  const path = `${crypto.randomUUID()}/${safeName(file.name || 'receipt')}`;
-  const { error } = await service.storage
-    .from(BUCKET)
-    .upload(path, file, { contentType: file.type, upsert: false });
-  if (error) return { ok: false, error: `Upload failed: ${error.message}` };
-  return { ok: true, path, mime: file.type, size: file.size };
+  const path = `${crypto.randomUUID()}/${safeName(name || 'receipt')}`;
+  const { data, error } = await service.storage.from(BUCKET).createSignedUploadUrl(path);
+  if (error || !data) return { error: 'Could not prepare the upload. Please try again.' };
+  return { path: data.path, token: data.token };
 }
 
 async function post(
@@ -114,8 +118,12 @@ async function post(
     return { error: 'Please fix the highlighted fields.', fieldErrors };
   }
 
-  const up = await uploadReceipt(formData.get('attachment'));
-  if (!up.ok) return { error: up.error };
+  // Receipt: already uploaded to Storage directly from the browser (see
+  // financeAttachmentUploadUrl). We only receive its path/metadata here.
+  const attachmentPath = ((formData.get('attachmentPath') as string) || '').trim() || null;
+  const attachmentMime = ((formData.get('attachmentMime') as string) || '').trim() || null;
+  const attachmentSizeRaw = formData.get('attachmentSize');
+  const attachmentSize = attachmentSizeRaw ? Number(attachmentSizeRaw) : null;
 
   const supabase = await createClient();
   let catKey: string | null = null;
@@ -139,12 +147,12 @@ async function post(
     p_description: fullDescription,
     p_order_id: null,
     p_notes: null,
-    p_image_path: up.path,
-    p_image_mime: up.mime,
-    p_image_size: up.size,
+    p_image_path: attachmentPath,
+    p_image_mime: attachmentMime,
+    p_image_size: attachmentSize,
   });
   if (error) {
-    if (up.path) await createServiceClient().storage.from(BUCKET).remove([up.path]);
+    if (attachmentPath) await createServiceClient().storage.from(BUCKET).remove([attachmentPath]);
     return { error: `Could not record the ${type.toLowerCase()}.` };
   }
 

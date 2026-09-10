@@ -6,7 +6,7 @@ export const ACCEPTED_FINANCE_TYPES = [
   'image/webp',
   'application/pdf',
 ];
-export const MAX_FINANCE_BYTES = 5 * 1024 * 1024;
+export const MAX_FINANCE_BYTES = 50 * 1024 * 1024; // 50 MB
 
 export const INCOME_CATEGORIES = ['PAYMENT', 'OTHER'] as const;
 export const EXPENSE_CATEGORIES = ['PURCHASE', 'SERVICE', 'OTHER'] as const;

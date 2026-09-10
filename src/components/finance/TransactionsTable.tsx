@@ -57,8 +57,41 @@ export function TransactionsTable({
                 </td>
                 <td className="px-4 py-3 text-neutral-600">{r.category}</td>
                 <td className="px-4 py-3 text-neutral-600">
-                  {r.item_name ? <span className="font-medium text-neutral-800">{r.item_name}. </span> : null}
-                  {r.description || (r.item_name ? '' : '—')}
+                  <div className="flex items-center gap-3">
+                    <span>
+                      {r.item_name ? <span className="font-medium text-neutral-800">{r.item_name}. </span> : null}
+                      {r.description || (r.item_name ? '' : '—')}
+                    </span>
+                    {r.hasAttachment && canViewAttachments ? (
+                      (r.attachmentMime ?? '').startsWith('image/') ? (
+                        <a
+                          href={`/api/finance-attachments/${r.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={tr(locale, 'Open receipt', 'فتح الإيصال')}
+                          className="shrink-0"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`/api/finance-attachments/${r.id}`}
+                            alt={tr(locale, 'Receipt', 'إيصال')}
+                            loading="lazy"
+                            className="h-12 w-12 rounded-md border border-neutral-200 object-cover transition hover:opacity-80"
+                          />
+                        </a>
+                      ) : (
+                        <a
+                          href={`/api/finance-attachments/${r.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex shrink-0 items-center gap-1 text-xs text-amber-600 hover:underline"
+                        >
+                          <Paperclip className="h-3.5 w-3.5" />
+                          {tr(locale, 'Receipt', 'إيصال')}
+                        </a>
+                      )
+                    ) : null}
+                  </div>
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-neutral-600">{r.created_by_name || '—'}</td>
                 <td
@@ -71,34 +104,6 @@ export function TransactionsTable({
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-3">
-                    {r.hasAttachment && canViewAttachments ? (
-                      (r.attachmentMime ?? '').startsWith('image/') ? (
-                        <a
-                          href={`/api/finance-attachments/${r.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title={tr(locale, 'Open receipt', 'فتح الإيصال')}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={`/api/finance-attachments/${r.id}`}
-                            alt={tr(locale, 'Receipt', 'إيصال')}
-                            loading="lazy"
-                            className="h-11 w-11 rounded-md border border-neutral-200 object-cover transition hover:opacity-80"
-                          />
-                        </a>
-                      ) : (
-                        <a
-                          href={`/api/finance-attachments/${r.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-amber-600 hover:underline"
-                        >
-                          <Paperclip className="h-3.5 w-3.5" />
-                          {tr(locale, 'Receipt', 'إيصال')}
-                        </a>
-                      )
-                    ) : null}
                     {canEdit ? (
                       <EditTransactionDialog
                         id={r.id}
