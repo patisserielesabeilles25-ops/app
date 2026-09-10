@@ -13,6 +13,7 @@ export type TransactionRow = {
   order_id: string | null;
   created_by_name: string | null;
   hasAttachment: boolean;
+  attachmentMime: string | null;
 };
 
 export type FinanceSummary = {
@@ -56,9 +57,14 @@ export async function getTransactions(filter?: TransactionFilter): Promise<Trans
   const ids = rows.map((r) => r.id);
   const { data: atts } = await supabase
     .from('financial_attachments')
-    .select('transaction_id')
-    .in('transaction_id', ids);
-  const withAtt = new Set((atts ?? []).map((a) => a.transaction_id));
+    .select('transaction_id, mime_type, created_at')
+    .in('transaction_id', ids)
+    .order('created_at', { ascending: true });
+  // First attachment per transaction (matches the API route's ordering).
+  const attMime = new Map<string, string | null>();
+  for (const a of atts ?? []) {
+    if (!attMime.has(a.transaction_id)) attMime.set(a.transaction_id, a.mime_type ?? null);
+  }
 
   return rows.map((r) => {
     const { creator, ...rest } = r as typeof r & { creator: { full_name?: string } | null };
@@ -66,7 +72,8 @@ export async function getTransactions(filter?: TransactionFilter): Promise<Trans
       ...rest,
       type: r.type as 'INCOME' | 'EXPENSE',
       created_by_name: creator?.full_name ?? null,
-      hasAttachment: withAtt.has(r.id),
+      hasAttachment: attMime.has(r.id),
+      attachmentMime: attMime.get(r.id) ?? null,
     };
   });
 }

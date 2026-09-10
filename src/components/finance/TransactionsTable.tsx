@@ -72,15 +72,32 @@ export function TransactionsTable({
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-3">
                     {r.hasAttachment && canViewAttachments ? (
-                      <a
-                        href={`/api/finance-attachments/${r.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs text-amber-600 hover:underline"
-                      >
-                        <Paperclip className="h-3.5 w-3.5" />
-                        {tr(locale, 'Receipt', 'إيصال')}
-                      </a>
+                      (r.attachmentMime ?? '').startsWith('image/') ? (
+                        <a
+                          href={`/api/finance-attachments/${r.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={tr(locale, 'Open receipt', 'فتح الإيصال')}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`/api/finance-attachments/${r.id}`}
+                            alt={tr(locale, 'Receipt', 'إيصال')}
+                            loading="lazy"
+                            className="h-11 w-11 rounded-md border border-neutral-200 object-cover transition hover:opacity-80"
+                          />
+                        </a>
+                      ) : (
+                        <a
+                          href={`/api/finance-attachments/${r.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-amber-600 hover:underline"
+                        >
+                          <Paperclip className="h-3.5 w-3.5" />
+                          {tr(locale, 'Receipt', 'إيصال')}
+                        </a>
+                      )
                     ) : null}
                     {canEdit ? (
                       <EditTransactionDialog
