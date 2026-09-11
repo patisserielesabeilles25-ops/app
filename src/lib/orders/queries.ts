@@ -172,6 +172,7 @@ export type OrderDetail = {
     delivery_date: string;
     delivery_time: string;
     delivery_required: boolean;
+    delivery_address: string | null;
     fulfillment: Fulfillment;
     production_status: ProductionStatus;
     production_stage: string | null;
@@ -202,7 +203,7 @@ export async function getOrderDetail(id: string): Promise<OrderDetail> {
   const { data: order } = await supabase
     .from('orders')
     .select(
-      'id, order_number, customer_name, customer_phone, cake_size_cm, size_label, description, fourage, coating, delivery_date, delivery_time, delivery_required, fulfillment, production_status, production_stage, delivery_status, sent_to_lab_at, ready_at, returned_at, return_reason, reported_at, report_reason, created_at, created_by, product_id',
+      'id, order_number, customer_name, customer_phone, cake_size_cm, size_label, description, fourage, coating, delivery_date, delivery_time, delivery_required, delivery_address, fulfillment, production_status, production_stage, delivery_status, sent_to_lab_at, ready_at, returned_at, return_reason, reported_at, report_reason, created_at, created_by, product_id',
     )
     .eq('id', id)
     .maybeSingle();

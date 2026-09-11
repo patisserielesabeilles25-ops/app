@@ -75,6 +75,7 @@ export async function createOrder(
     deliveryDate: formData.get('deliveryDate'),
     deliveryTime: formData.get('deliveryTime'),
     deliveryRequired: formData.get('deliveryRequired') === 'on',
+    deliveryAddress: formData.get('deliveryAddress') ?? '',
     deliveryAmount: formData.get('deliveryAmount') || 0,
     totalAmount: formData.get('totalAmount'),
     montageAmount: formData.get('montageAmount') || 0,
@@ -141,11 +142,12 @@ export async function createOrder(
   // Link the chosen catalog product + store the fourage note (service client:
   // the caller passed orders.create, but the update policy needs orders.edit).
   const productId = String(formData.get('productId') ?? '');
-  const patch: { product_id?: string; fourage?: string | null; coating?: string; size_label?: string } = {};
+  const patch: { product_id?: string; fourage?: string | null; coating?: string; size_label?: string; delivery_address?: string | null } = {};
   if (productId) patch.product_id = productId;
   if (input.fourage) patch.fourage = input.fourage;
   patch.coating = input.coating;
   patch.size_label = input.cakeSizeCm;
+  patch.delivery_address = input.deliveryRequired ? (input.deliveryAddress || null) : null;
   if (created?.id && Object.keys(patch).length > 0) {
     await createServiceClient().from('orders').update(patch).eq('id', created.id);
   }
@@ -421,6 +423,7 @@ export async function updateOrder(
     deliveryDate: formData.get('deliveryDate'),
     deliveryTime: formData.get('deliveryTime'),
     deliveryRequired: formData.get('deliveryRequired') === 'on',
+    deliveryAddress: formData.get('deliveryAddress') ?? '',
   });
   if (!parsed.success) {
     const fieldErrors: Record<string, string> = {};
@@ -448,6 +451,7 @@ export async function updateOrder(
       delivery_date: input.deliveryDate,
       delivery_time: input.deliveryTime,
       delivery_required: input.deliveryRequired,
+      delivery_address: input.deliveryRequired ? (input.deliveryAddress || null) : null,
       fulfillment: input.deliveryRequired ? 'DELIVERY' : 'PICKUP',
       ...(productId ? { product_id: productId } : {}),
     })

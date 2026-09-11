@@ -179,19 +179,30 @@ export function OrderForm({ products = [], agents = [] }: { products?: OrderProd
           {tr(locale, 'This order requires delivery', 'هذا الطلب يتطلب التوصيل')}
         </label>
         {delivery ? (
-          <Field label={tr(locale, 'Delivery price', 'مبلغ التوصيل')} htmlFor="deliveryAmount" error={fe.deliveryAmount}>
-            <input
-              id="deliveryAmount"
-              name="deliveryAmount"
-              type="number"
-              step="0.01"
-              min="0"
-              value={deliveryAmt}
-              onChange={(e) => setDeliveryAmt(e.target.value)}
-              className={inputCls}
-              placeholder="0"
-            />
-          </Field>
+          <>
+            <Field label={tr(locale, 'Delivery address', 'عنوان التوصيل')} htmlFor="deliveryAddress" error={fe.deliveryAddress}>
+              <textarea
+                id="deliveryAddress"
+                name="deliveryAddress"
+                rows={2}
+                className={inputCls}
+                placeholder={tr(locale, 'Street, building, city, landmark…', 'الشارع، المبنى، المدينة، معلم…')}
+              />
+            </Field>
+            <Field label={tr(locale, 'Delivery price', 'مبلغ التوصيل')} htmlFor="deliveryAmount" error={fe.deliveryAmount}>
+              <input
+                id="deliveryAmount"
+                name="deliveryAmount"
+                type="number"
+                step="0.01"
+                min="0"
+                value={deliveryAmt}
+                onChange={(e) => setDeliveryAmt(e.target.value)}
+                className={inputCls}
+                placeholder="0"
+              />
+            </Field>
+          </>
         ) : null}
       </section>
 

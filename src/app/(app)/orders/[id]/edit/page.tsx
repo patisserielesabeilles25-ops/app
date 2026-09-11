@@ -61,6 +61,7 @@ export default async function EditOrderPage({
               deliveryDate: order.delivery_date,
               deliveryTime: order.delivery_time.slice(0, 5),
               deliveryRequired: order.delivery_required,
+              deliveryAddress: order.delivery_address ?? '',
               totalAmount: financials?.total_amount,
               montageAmount: financials?.montage_amount,
               advancePayment: financials?.advance_payment,

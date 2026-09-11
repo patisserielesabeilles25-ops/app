@@ -272,6 +272,9 @@ export default async function OrderDetailPage({
                 {order.coating ? <Row label={tr(locale, 'Coating', 'التغطية')} value={order.coating} /> : null}
                 <Row label={tr(locale, 'Delivery date', 'تاريخ التوصيل')} value={formatDate(order.delivery_date)} />
                 <Row label={tr(locale, 'Delivery time', 'وقت التوصيل')} value={formatTime(order.delivery_time)} />
+                {order.delivery_required && order.delivery_address ? (
+                  <Row label={tr(locale, 'Delivery address', 'عنوان التوصيل')} value={order.delivery_address} />
+                ) : null}
                 {order.fourage ? (
                   <Row
                     label={tr(locale, 'Fourrage', 'الحشوة')}

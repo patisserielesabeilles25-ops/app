@@ -24,6 +24,7 @@ export const CreateOrderSchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Choose a delivery date'),
     deliveryTime: z.string().regex(/^\d{2}:\d{2}$/, 'Choose a delivery time'),
     deliveryRequired: z.boolean().default(false),
+    deliveryAddress: z.string().trim().max(300).optional().default(''),
     deliveryAmount: z.coerce.number().min(0, 'Cannot be negative').max(1_000_000).default(0),
     totalAmount: z.coerce
       .number({ message: 'Enter the total amount' })
@@ -51,6 +52,7 @@ export const OperationalOrderSchema = z.object({
   deliveryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Choose a delivery date'),
   deliveryTime: z.string().regex(/^\d{2}:\d{2}$/, 'Choose a delivery time'),
   deliveryRequired: z.boolean().default(false),
+  deliveryAddress: z.string().trim().max(300).optional().default(''),
 });
 
 /** Financial fields only — applied on edit when the user has finance permission. */
