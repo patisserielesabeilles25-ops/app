@@ -1,6 +1,6 @@
 import { Store, CheckCircle2 } from 'lucide-react';
 import { requirePermission, getMyPermissions } from '@/lib/auth/permissions';
-import { getMagasinDay } from '@/lib/magasin/queries';
+import { getMagasinDay, getMagasinRange } from '@/lib/magasin/queries';
 import { getProducts } from '@/lib/products/queries';
 import { getAgents } from '@/lib/agents/queries';
 import { getCategories } from '@/lib/finance/config';
@@ -24,21 +24,43 @@ function algiersToday(): string {
   }).format(new Date());
 }
 
+/** YYYY-MM-DD for N days before today (Algiers). Anchored at noon UTC to avoid offset rollover. */
+function daysAgo(n: number): string {
+  const d = new Date(`${algiersToday()}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+
+/** First day of the current month (Algiers). */
+function monthStart(): string {
+  return `${algiersToday().slice(0, 7)}-01`;
+}
+
 export default async function MagasinPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; saved?: string }>;
+  searchParams: Promise<{ date?: string; from?: string; to?: string; saved?: string }>;
 }) {
   await requirePermission('magasin.view');
   const locale = await getLocale();
-  const { date, saved } = await searchParams;
-  const selected = date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : algiersToday();
+  const { date, from, to, saved } = await searchParams;
+  const isDate = (v?: string) => !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+  // `date` keeps the old single-day link working; `from`/`to` add a custom range.
+  const today = algiersToday();
+  let rangeFrom = isDate(from) ? (from as string) : isDate(date) ? (date as string) : today;
+  let rangeTo = isDate(to) ? (to as string) : isDate(date) ? (date as string) : today;
+  if (rangeFrom > rangeTo) [rangeFrom, rangeTo] = [rangeTo, rangeFrom]; // tolerate reversed input
+  const isRange = rangeFrom !== rangeTo;
+  // New sales/expenses are recorded against the range's end day (today by default).
+  const formDate = rangeTo;
+
   const perms = await getMyPermissions();
   const canSale = perms.has('magasin.sale.create');
   const canExpense = perms.has('magasin.expense.create');
 
   const [day, products, categories, agentOptions] = await Promise.all([
-    getMagasinDay(selected),
+    isRange ? getMagasinRange(rangeFrom, rangeTo) : getMagasinDay(rangeFrom),
     getProducts({}),
     getCategories(),
     canSale || canExpense ? getAgents() : Promise.resolve([]),
@@ -68,25 +90,43 @@ export default async function MagasinPage({
         </div>
       ) : null}
 
-      <form method="get" className="mb-6 flex items-end gap-3">
+      <form method="get" className="mb-6 flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="date" className="text-sm font-medium text-neutral-700">{tr(locale, 'Date', 'التاريخ')}</label>
+          <label htmlFor="from" className="text-sm font-medium text-neutral-700">{tr(locale, 'From', 'من')}</label>
           <input
-            id="date"
-            name="date"
+            id="from"
+            name="from"
             type="date"
-            defaultValue={selected}
+            defaultValue={rangeFrom}
+            className="rounded-lg border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="to" className="text-sm font-medium text-neutral-700">{tr(locale, 'To', 'إلى')}</label>
+          <input
+            id="to"
+            name="to"
+            type="date"
+            defaultValue={rangeTo}
             className="rounded-lg border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
           />
         </div>
         <button type="submit" className="rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100">
           {tr(locale, 'Load', 'تحميل')}
         </button>
+        <div className="flex flex-wrap gap-2">
+          <a href={`?from=${today}&to=${today}`} className="rounded-lg px-3 py-2.5 text-sm font-medium text-amber-600 hover:bg-amber-50">{tr(locale, 'Today', 'اليوم')}</a>
+          <a href={`?from=${daysAgo(6)}&to=${today}`} className="rounded-lg px-3 py-2.5 text-sm font-medium text-amber-600 hover:bg-amber-50">{tr(locale, 'Last 7 days', 'آخر 7 أيام')}</a>
+          <a href={`?from=${monthStart()}&to=${today}`} className="rounded-lg px-3 py-2.5 text-sm font-medium text-amber-600 hover:bg-amber-50">{tr(locale, 'This month', 'هذا الشهر')}</a>
+        </div>
       </form>
 
       {/* Daily summary */}
       <Card className="mb-6">
-        <CardHeader title={tr(locale, 'Daily summary', 'ملخص اليوم')} description={formatDate(selected)} />
+        <CardHeader
+          title={isRange ? tr(locale, 'Period summary', 'ملخص الفترة') : tr(locale, 'Daily summary', 'ملخص اليوم')}
+          description={isRange ? `${formatDate(rangeFrom)} → ${formatDate(rangeTo)}` : formatDate(rangeFrom)}
+        />
         <CardBody>
           <div className="grid grid-cols-3 gap-3 text-center">
             <div>
@@ -111,12 +151,12 @@ export default async function MagasinPage({
           {canSale ? (
             <Card>
               <CardHeader title={tr(locale, 'New sale', 'بيع جديد')} description={tr(locale, 'Pick products from the catalog.', 'اختر المنتجات من الكتالوج.')} />
-              <CardBody><MagasinSaleForm date={selected} products={productOptions} agents={agentOptions} /></CardBody>
+              <CardBody><MagasinSaleForm date={formDate} products={productOptions} agents={agentOptions} /></CardBody>
             </Card>
           ) : null}
           <Card>
             <CardHeader
-              title={tr(locale, "Today's sales", 'مبيعات اليوم')}
+              title={isRange ? tr(locale, 'Sales', 'المبيعات') : tr(locale, "Today's sales", 'مبيعات اليوم')}
               description={tr(
                 locale,
                 `${day.sales.length} sale(s) · ${day.orderPayments.length} order payment(s)`,
@@ -166,11 +206,11 @@ export default async function MagasinPage({
           {canExpense ? (
             <Card>
               <CardHeader title={tr(locale, 'New expense', 'مصروف جديد')} description={tr(locale, "Deducted from the day's summary.", 'يُخصم من ملخص اليوم.')} />
-              <CardBody><MagasinExpenseForm date={selected} categories={expenseCategories} agents={agentOptions} /></CardBody>
+              <CardBody><MagasinExpenseForm date={formDate} categories={expenseCategories} agents={agentOptions} /></CardBody>
             </Card>
           ) : null}
           <Card>
-            <CardHeader title={tr(locale, "Today's expenses", 'مصاريف اليوم')} description={tr(locale, `${day.expenses.length} expense(s)`, `${day.expenses.length} مصروف`)} />
+            <CardHeader title={isRange ? tr(locale, 'Expenses', 'المصاريف') : tr(locale, "Today's expenses", 'مصاريف اليوم')} description={tr(locale, `${day.expenses.length} expense(s)`, `${day.expenses.length} مصروف`)} />
             <CardBody>
               {day.expenses.length === 0 ? (
                 <EmptyState icon={Store} title={tr(locale, 'No expenses recorded', 'لا توجد مصاريف مسجلة')} />
