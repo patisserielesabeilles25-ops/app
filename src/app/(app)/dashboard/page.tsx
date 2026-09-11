@@ -3,7 +3,7 @@ import {
   CalendarDays, CalendarRange, Sparkles, FlaskConical, CheckCircle2,
   Wallet, TrendingUp, TrendingDown, type LucideIcon,
 } from 'lucide-react';
-import { requirePermission, getMyPermissions } from '@/lib/auth/permissions';
+import { requirePermission, getMyPermissions, getMyRoleKeys } from '@/lib/auth/permissions';
 import { getDashboardStats, getTodayOrders } from '@/lib/dashboard/queries';
 import { getFinanceSummary } from '@/lib/finance/queries';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -43,7 +43,10 @@ export default async function DashboardPage() {
   await requirePermission('dashboard.view');
   const locale = await getLocale();
   const perms = await getMyPermissions();
-  const canFinance = perms.has('finance.transactions.view');
+  const roles = await getMyRoleKeys();
+  // Finance summary is hidden from the Vendeur role (admins always exempt).
+  const canFinance =
+    perms.has('finance.transactions.view') && (roles.has('admin') || !roles.has('vendeur'));
 
   const stats = await getDashboardStats();
   const todayOrders = await getTodayOrders();
