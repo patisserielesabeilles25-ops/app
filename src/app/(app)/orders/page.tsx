@@ -40,7 +40,6 @@ export default async function OrdersPage({
   const perms = await getMyPermissions();
   const canCreate = perms.has('orders.create');
   const canEdit = perms.has('orders.edit');
-  const canDelete = perms.has('orders.delete');
   const canProduce = perms.has('production.update') || canEdit;
   const canRecordPayment = perms.has('finance.income.create');
   const canViewFinance = perms.has('finance.view') || perms.has('finance.transactions.view');
@@ -138,7 +137,7 @@ export default async function OrdersPage({
       </div>
 
       <OrderSelectionProvider>
-      <OrdersActionBar orders={toolbarOrders} canEdit={canEdit} canDelete={canDelete} />
+      <OrdersActionBar orders={toolbarOrders} canEdit={canEdit} />
 
       {sp.deleted ? (
         <div className="mx-5 mb-4 flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-800">

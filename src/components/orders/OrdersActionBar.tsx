@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Printer, Pencil, CalendarClock, PackageX, Trash2, Undo2, MousePointerClick } from 'lucide-react';
+import { Printer, Pencil, CalendarClock, PackageX, Undo2, MousePointerClick } from 'lucide-react';
 import { useOrderSelection } from '@/components/orders/OrderSelection';
 import { ReportOrderDialog } from '@/components/orders/ReportOrderDialog';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -9,7 +9,6 @@ import {
   markOrderReturned,
   unmarkOrderReturned,
   unreportOrder,
-  deleteOrder,
 } from '@/lib/orders/actions';
 import { useLocale } from '@/lib/i18n/LocaleProvider';
 import { tr } from '@/lib/i18n/t';
@@ -34,11 +33,9 @@ const DISABLED = 'cursor-not-allowed opacity-40';
 export function OrdersActionBar({
   orders,
   canEdit,
-  canDelete,
 }: {
   orders: ToolbarOrder[];
   canEdit: boolean;
-  canDelete: boolean;
 }) {
   const locale = useLocale();
   const { selectedId } = useOrderSelection();
@@ -131,27 +128,6 @@ export function OrdersActionBar({
               />
             )
           ) : null}
-
-          {/* Delete */}
-          {canDelete ? (
-            <ConfirmDialog
-              triggerLabel={
-                <span className={`${BTN} ${RED}`}>
-                  <Trash2 className="h-4 w-4" />
-                  {tr(locale, 'Delete', 'حذف')}
-                </span>
-              }
-              title={tr(locale, 'Delete this order?', 'حذف هذا الطلب؟')}
-              description={tr(
-                locale,
-                'This cannot be undone. Orders with recorded payments cannot be deleted.',
-                'لا يمكن التراجع عن هذا. لا يمكن حذف الطلبات التي لها مدفوعات مسجَّلة.',
-              )}
-              confirmLabel={tr(locale, 'Delete order', 'حذف الطلب')}
-              action={deleteOrder}
-              hiddenFields={{ orderId: order.id }}
-            />
-          ) : null}
         </div>
       ) : (
         /* No selection — show the buttons in a disabled preview state. */
@@ -175,12 +151,6 @@ export function OrdersActionBar({
                 {tr(locale, 'Mark returned', 'تحديد كمُرتجع')}
               </span>
             </>
-          ) : null}
-          {canDelete ? (
-            <span className={`${BTN} ${RED} ${DISABLED}`}>
-              <Trash2 className="h-4 w-4" />
-              {tr(locale, 'Delete', 'حذف')}
-            </span>
           ) : null}
         </div>
       )}
