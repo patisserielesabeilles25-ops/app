@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { Pencil, Send, Trash2, ArrowLeft, CheckCircle2, AlertTriangle, PackageX, Undo2, Truck, Printer } from 'lucide-react';
+import { Pencil, Send, ArrowLeft, CheckCircle2, AlertTriangle, PackageX, Undo2, Truck, Printer } from 'lucide-react';
 import { requirePermission, getMyPermissions } from '@/lib/auth/permissions';
 import { getOrderDetail, getOrderStatusHistory, getOrderStages } from '@/lib/orders/queries';
 import { getAgents } from '@/lib/agents/queries';
 import { getSignedOrderImageUrl } from '@/lib/orders/images';
-import { startProduction, markOutForDelivery, markDelivered, deleteOrder, markOrderReturned, unmarkOrderReturned, unreportOrder } from '@/lib/orders/actions';
+import { startProduction, markOutForDelivery, markDelivered, markOrderReturned, unmarkOrderReturned, unreportOrder } from '@/lib/orders/actions';
 import { PaymentForm } from '@/components/orders/PaymentForm';
 import { StageForm } from '@/components/orders/StageForm';
 import { ReportOrderDialog } from '@/components/orders/ReportOrderDialog';
@@ -89,7 +89,6 @@ export default async function OrderDetailPage({
   const canEdit = perms.has('orders.edit');
   const canProduce = perms.has('production.update');
   const canDeliver = perms.has('delivery.update');
-  const canDelete = perms.has('orders.delete');
   const canRecordPayment = perms.has('finance.income.create');
 
   const imageUrl = image
@@ -194,21 +193,6 @@ export default async function OrderDetailPage({
                   {tr(locale, 'Clear returned', 'إلغاء الإرجاع')}
                 </Button>
               </form>
-            ) : null}
-            {canDelete ? (
-              <ConfirmDialog
-                triggerLabel={
-                  <span className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50">
-                    <Trash2 className="h-4 w-4" />
-                    {tr(locale, 'Delete', 'حذف')}
-                  </span>
-                }
-                title={tr(locale, 'Delete this order?', 'حذف هذا الطلب؟')}
-                description={tr(locale, 'This cannot be undone. Orders with recorded payments cannot be deleted.', 'لا يمكن التراجع عن هذا. لا يمكن حذف الطلبات التي لها مدفوعات مسجَّلة.')}
-                confirmLabel={tr(locale, 'Delete order', 'حذف الطلب')}
-                action={deleteOrder}
-                hiddenFields={{ orderId: order.id }}
-              />
             ) : null}
           </div>
         }
