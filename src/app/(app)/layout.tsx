@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth/session';
-import { getMyPermissions } from '@/lib/auth/permissions';
+import { getMyPermissions, getMyRoleKeys } from '@/lib/auth/permissions';
 import { getLocale } from '@/lib/i18n/server';
 import { AppShell } from '@/components/nav/AppShell';
 import { OrdersRealtime } from '@/components/realtime/OrdersRealtime';
@@ -20,6 +20,7 @@ export default async function AppLayout({
 }) {
   const user = await requireUser();
   const permissions = [...(await getMyPermissions())];
+  const roleKeys = [...(await getMyRoleKeys())];
   const locale = await getLocale();
 
   const supabase = await createClient();
@@ -33,6 +34,7 @@ export default async function AppLayout({
     <AppShell
       user={{ email: user.email ?? '', fullName: profile?.full_name ?? null }}
       permissions={permissions}
+      roleKeys={roleKeys}
       locale={locale}
     >
       <OrdersRealtime />

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { requirePermission } from '@/lib/auth/permissions';
+import { requirePermission, forbidForRoles } from '@/lib/auth/permissions';
 import {
   getFixedWorkers,
   getAttendanceMonth,
@@ -21,6 +21,7 @@ export default async function AttendancePage({
   searchParams: Promise<{ month?: string }>;
 }) {
   await requirePermission('payroll.view');
+  await forbidForRoles(['vendeur']);
   const locale = await getLocale();
   const sp = await searchParams;
 

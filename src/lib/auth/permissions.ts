@@ -72,6 +72,18 @@ export async function hasPermission(perm: Permission): Promise<boolean> {
 }
 
 /**
+ * Render the forbidden boundary if the current user holds any of the given role
+ * keys. Admins are always exempt. Use to hide a route from a specific role even
+ * when that role still holds the underlying permission (e.g. hide Finance from
+ * "vendeur" without stripping finance.view).
+ */
+export async function forbidForRoles(roleKeys: string[]): Promise<void> {
+  const roles = await getMyRoleKeys();
+  if (roles.has('admin')) return;
+  if (roleKeys.some((k) => roles.has(k))) forbidden();
+}
+
+/**
  * Role keys held by the current user (e.g. 'admin', 'maskage', 'preparateur').
  * Resolved via the SECURITY DEFINER `my_role_keys()` RPC. Cached per request.
  */

@@ -17,11 +17,13 @@ export type AppShellUser = { email: string; fullName: string | null };
 export function AppShell({
   user,
   permissions,
+  roleKeys = [],
   locale = 'en',
   children,
 }: {
   user: AppShellUser;
   permissions: string[];
+  roleKeys?: string[];
   locale?: Locale;
   children: React.ReactNode;
 }) {
@@ -29,6 +31,8 @@ export function AppShell({
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
   const allowed = new Set(permissions);
+  const roles = new Set(roleKeys);
+  const isAdmin = roles.has('admin');
 
   // Close the mobile drawer AFTER the route actually changes. Closing it inside
   // the link's onClick unmounts the <Link> in the same tick, which races with —
@@ -45,6 +49,8 @@ export function AppShell({
     title: dict.sections[s.title] ?? s.title,
     items: s.items
       .filter((i) => !i.permission || allowed.has(i.permission))
+      // Hide items a specific role must not see (admins are always exempt).
+      .filter((i) => isAdmin || !i.hideForRoles?.some((r) => roles.has(r)))
       .map((i) => ({ ...i, label: dict.nav[i.href] ?? i.label })),
   })).filter((s) => s.items.length > 0);
 

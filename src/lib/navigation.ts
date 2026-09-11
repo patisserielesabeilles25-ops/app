@@ -26,6 +26,9 @@ export type NavItem = {
   /** Permission required to see AND access this route. Omit for routes any
    *  signed-in user may reach (e.g. personal settings). */
   permission?: Permission;
+  /** Hide this item from users holding any of these role keys (admins exempt).
+   *  Used to hide a route from a specific role that still holds the permission. */
+  hideForRoles?: string[];
 };
 
 export type NavSection = {
@@ -49,8 +52,8 @@ export const NAV_SECTIONS: NavSection[] = [
     title: 'Operations',
     items: [
       { href: '/orders', label: 'Orders', icon: ClipboardList, permission: 'orders.view' },
-      { href: '/production-sheets', label: 'Production Sheets', icon: NotebookPen, permission: 'orders.view' },
-      { href: '/attendance', label: 'Attendance', icon: CalendarCheck, permission: 'payroll.view' },
+      { href: '/production-sheets', label: 'Production Sheets', icon: NotebookPen, permission: 'orders.view', hideForRoles: ['vendeur'] },
+      { href: '/attendance', label: 'Attendance', icon: CalendarCheck, permission: 'payroll.view', hideForRoles: ['vendeur'] },
       { href: '/clients', label: 'Clients', icon: Contact, permission: 'orders.view' },
       { href: '/calendar', label: 'Calendar', icon: CalendarDays, permission: 'calendar.view' },
       { href: '/products', label: 'Products', icon: Package, permission: 'products.view' },
@@ -60,7 +63,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     title: 'Finance',
     items: [
-      { href: '/finance', label: 'Cash Register', icon: Wallet, permission: 'finance.view' },
+      { href: '/finance', label: 'Cash Register', icon: Wallet, permission: 'finance.view', hideForRoles: ['vendeur'] },
       { href: '/finance/reports', label: 'Analytics', icon: BarChart3, permission: 'finance.reports.view' },
       { href: '/finance/magasin', label: 'Magasin', icon: Store, permission: 'magasin.view' },
       { href: '/finance/categories', label: 'Categories', icon: Tags, permission: 'finance.categories.manage' },

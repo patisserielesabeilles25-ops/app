@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Plus, Minus, Wallet, ArrowRight } from 'lucide-react';
-import { requirePermission, getMyPermissions } from '@/lib/auth/permissions';
+import { requirePermission, getMyPermissions, forbidForRoles } from '@/lib/auth/permissions';
 import { getFinanceOverview, type Summary } from '@/lib/finance/reports';
 import { getTransactions } from '@/lib/finance/queries';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -68,6 +68,7 @@ function Breakdown({
 
 export default async function FinanceOverviewPage() {
   await requirePermission('finance.view');
+  await forbidForRoles(['vendeur']);
   const locale = await getLocale();
   const perms = await getMyPermissions();
   const canReport = perms.has('finance.transactions.view') || perms.has('finance.reports.view');
