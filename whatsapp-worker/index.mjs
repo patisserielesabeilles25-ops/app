@@ -6,16 +6,13 @@
 // database using the service role key.
 
 import makeWASocket, {
-  useMultiFileAuthState,
   DisconnectReason,
   fetchLatestBaileysVersion,
 } from '@whiskeysockets/baileys';
 import { createClient } from '@supabase/supabase-js';
 import QRCode from 'qrcode';
 import pino from 'pino';
-import { rm } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { useSupabaseAuthState } from './authState.mjs';
 
 // ---------------------------------------------------------------------------
 // Config & clients
@@ -29,8 +26,9 @@ const CONNECTION_ID = 'default';
 const MESSAGE_BATCH = 10;
 const SEND_DELAY_MS = 1500; // small delay between sends to avoid rate-limiting/bans
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const AUTH_DIR = path.join(__dirname, 'auth');
+// Durable auth session lives in Supabase Storage (survives restarts / new hosts).
+const AUTH_BUCKET = 'whatsapp-auth';
+const AUTH_OBJECT = `${CONNECTION_ID}.json`;
 
 const log = pino({ level: process.env.LOG_LEVEL || 'info' });
 // A second, quiet logger for Baileys itself — it is extremely chatty.
@@ -51,6 +49,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
 
 let sock = null;
 let saveCreds = null;
+let clearAuthState = null; // wipes the stored Supabase session on intentional logout
 let isConnected = false;
 let connecting = false;
 let processingQueue = false;
@@ -87,8 +86,13 @@ async function connectToWhatsApp() {
   connecting = true;
 
   try {
-    const { state, saveCreds: save } = await useMultiFileAuthState(AUTH_DIR);
+    const { state, saveCreds: save, clearState } = await useSupabaseAuthState(
+      supabase,
+      AUTH_BUCKET,
+      AUTH_OBJECT,
+    );
     saveCreds = save;
+    clearAuthState = clearState;
 
     const { version } = await fetchLatestBaileysVersion();
     log.info({ version }, 'Using Baileys version');
@@ -200,8 +204,8 @@ async function handleCommands() {
         }
         sock = null;
         isConnected = false;
-        // Clear the on-disk session so the next connect starts fresh.
-        await rm(AUTH_DIR, { recursive: true, force: true });
+        // Clear the stored session so the next connect starts fresh.
+        if (clearAuthState) await clearAuthState();
         await updateConnection({ status: 'disconnected', qr_code: null, command: null });
       } catch (err) {
         log.error({ err }, 'Error handling disconnect command');

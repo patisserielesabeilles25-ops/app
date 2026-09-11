@@ -104,10 +104,17 @@ export function WhatsAppConnection({
                   className="h-full w-full object-contain"
                 />
               ) : (
-                <div className="flex flex-col items-center gap-2 text-neutral-400">
+                <div className="flex flex-col items-center gap-2 px-3 text-center text-neutral-400">
                   <QrCode className="h-10 w-10" />
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span className="text-xs">{tr(locale, 'Generating QR…', 'جارٍ إنشاء الرمز…')}</span>
+                  <span className="text-[11px] leading-snug text-neutral-400">
+                    {tr(
+                      locale,
+                      "If it doesn't appear, the WhatsApp worker service isn't running.",
+                      'إذا لم يظهر، فإن خدمة عامل واتساب غير قيد التشغيل.',
+                    )}
+                  </span>
                 </div>
               )}
             </div>

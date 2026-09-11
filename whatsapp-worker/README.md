@@ -45,29 +45,53 @@ Fill in `.env`:
 5. Once linked, the panel shows **"Connecté"** and queued messages start sending.
 
 To disconnect, click the disconnect action in the panel — the worker logs out,
-clears its local session, and sets the status back to disconnected.
+clears its stored session, and sets the status back to disconnected.
+
+## The session is durable (no re-linking)
+
+The WhatsApp session is stored in the **Supabase Storage** bucket
+`whatsapp-auth` (object `default.json`), not on the local disk — see
+`authState.mjs`. This means:
+
+- The worker **reconnects the same account automatically on boot**, on any host.
+- Restarts, redeploys, crashes, or moving to a new machine do **not** require a
+  new QR scan. You link once; it stays linked until you explicitly disconnect.
+
+You therefore do **not** need to persist any local folder or mount a volume.
+(The old on-disk `auth/` folder is no longer used.)
 
 ## Hosting (must run 24/7)
 
-This process must stay running around the clock. Good options:
+WhatsApp needs a persistent socket, so this process must stay running around the
+clock on an always-on host (Vercel cannot do this). Pick one:
 
-- **Railway / Render / Fly.io** — deploy this folder as a worker/background
-  service (start command `npm start`).
-- **A small VPS** — run it under a process manager so it restarts on crash/reboot:
-  - `pm2 start index.mjs --name nahla-whatsapp`
-  - a `systemd` service, or
-  - `screen` / `tmux` for a quick-and-dirty setup.
+- **Railway / Render / Fly.io** — deploy this `whatsapp-worker/` folder as a
+  *worker / background service* (no public port needed). Set the two env vars
+  (`SUPABASE_URL`, `SUPABASE_SERVICE_KEY`); start command `node index.mjs`. A
+  `Dockerfile` is included, so these platforms can build it directly.
+- **A small VPS / always-on PC** — run it under a process manager so it restarts
+  on crash and on reboot:
+  - `pm2 start index.mjs --name nahla-whatsapp && pm2 save && pm2 startup`
+  - or a `systemd` service.
 
-### Persist the `auth/` folder
+Because the session is in Supabase, you can redeploy or move hosts freely — the
+worker comes back connected on its own.
 
-The `auth/` folder holds the WhatsApp session (created by
-`useMultiFileAuthState`). **Persist it across restarts** (e.g. a mounted volume
-on Railway/Render/Fly, or just a stable directory on a VPS). If it is lost, the
-worker has to be re-linked by scanning a new QR code.
+## Run with Docker
+
+```bash
+docker build -t nahla-whatsapp ./whatsapp-worker
+docker run -d --restart unless-stopped --name nahla-whatsapp \
+  -e SUPABASE_URL="https://xxxx.supabase.co" \
+  -e SUPABASE_SERVICE_KEY="your-service-role-key" \
+  nahla-whatsapp
+```
+
+`--restart unless-stopped` keeps it alive across crashes and machine reboots.
 
 ## Security
 
 The `service_role` key bypasses Row Level Security and has full admin access to
-your database. Keep it **only** in this worker's `.env` file. Never commit it,
-never ship it to the browser or the Next.js app, and never expose it publicly.
-`.env` and `auth/` are already git-ignored.
+your database. Keep it **only** in this worker's `.env` file (or your host's
+secret manager). Never commit it, never ship it to the browser or the Next.js
+app, and never expose it publicly. `.env` and `auth/` are already git-ignored.
