@@ -157,9 +157,9 @@ export default async function OrdersPage({
             <thead className="border-y border-neutral-100 bg-neutral-50 text-left text-xs uppercase tracking-wider text-neutral-500">
               <tr>
                 <th className="w-10 px-4 py-3" />
+                <th className="px-4 py-3 font-semibold">{tr(locale, 'Created', 'تاريخ الإنشاء')}</th>
                 <th className="px-4 py-3 font-semibold">{tr(locale, 'Reference', 'المرجع')}</th>
                 <th className="px-4 py-3 font-semibold">{tr(locale, 'Customer', 'العميل')}</th>
-                <th className="px-4 py-3 font-semibold">{tr(locale, 'Created', 'تاريخ الإنشاء')}</th>
                 <th className="px-4 py-3 font-semibold">{tr(locale, 'Delivery', 'التوصيل')}</th>
                 <th className="px-4 py-3 font-semibold">{tr(locale, 'Product', 'المنتج')}</th>
                 <th className="px-4 py-3 font-semibold">{tr(locale, 'Image', 'الصورة')}</th>
@@ -175,6 +175,10 @@ export default async function OrdersPage({
                 <tr key={o.id} className="hover:bg-neutral-50">
                   <td className="px-4 py-3 text-center">
                     <OrderSelectRadio orderId={o.id} />
+                  </td>
+                  <td className="px-4 py-3 text-neutral-600 whitespace-nowrap">
+                    {formatDate(o.created_at.slice(0, 10))}
+                    <span className="text-neutral-400"> · {formatTime(o.created_at.slice(11, 16))}</span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -225,10 +229,6 @@ export default async function OrdersPage({
                         {tr(locale, 'Remaining', 'المتبقي')} {formatAmount(o.remaining)} DA
                       </span>
                     ) : null}
-                  </td>
-                  <td className="px-4 py-3 text-neutral-600 whitespace-nowrap">
-                    {formatDate(o.created_at.slice(0, 10))}
-                    <span className="text-neutral-400"> · {formatTime(o.created_at.slice(11, 16))}</span>
                   </td>
                   <td className="px-4 py-3 text-neutral-600">
                     {formatDate(o.delivery_date)}
