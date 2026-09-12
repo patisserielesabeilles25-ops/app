@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { createClient } from '@/lib/supabase/server';
+import { orderCanonicalStatus } from '@/lib/statuses/derive';
 import type {
   ProductionStatus,
   DeliveryStatus,
@@ -29,15 +30,23 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   const base = () => supabase.from('orders').select('*', { count: 'exact', head: true });
   const num = async (q: PromiseLike<{ count: number | null }>) => (await q).count ?? 0;
 
-  const [newCount, inProduction, ready, outForDelivery, todayCount, weekCount] =
+  const [newCount, inProduction, outForDelivery, todayCount, weekCount] =
     await Promise.all([
       num(base().eq('production_status', 'NEW')),
       num(base().eq('production_status', 'IN_PRODUCTION')),
-      num(base().eq('production_status', 'READY')),
       num(base().eq('delivery_status', 'OUT_FOR_DELIVERY')),
       num(base().eq('delivery_date', t)),
       num(base().gte('delivery_date', t).lte('delivery_date', in7)),
     ]);
+
+  // "Ready" must match the /orders?status=READY list, i.e. the canonical status.
+  // A raw production_status='READY' count over-counts, because auto-delivered
+  // orders keep production_status='READY' (only delivery_status flips).
+  const { data: statusRows } = await supabase
+    .from('orders')
+    .select('production_status, delivery_status, fulfillment, returned_at, reported_at, production_stage, delivery_date')
+    .limit(100000);
+  const ready = (statusRows ?? []).filter((r) => orderCanonicalStatus(r) === 'READY').length;
 
   const { data: rm } = await supabase
     .from('ready_made_daily_production')
