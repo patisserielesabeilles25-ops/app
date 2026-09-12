@@ -29,13 +29,17 @@ export const metadata = { title: 'Commandes — Nahla Cake Panel' };
 export default async function OrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; deleted?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; deleted?: string; from?: string; to?: string; dateField?: string }>;
 }) {
   await requirePermission('orders.view');
   const locale = await getLocale();
   const sp = await searchParams;
   const q = sp.q ?? '';
   const status = sp.status ?? '';
+  const isDate = (v?: string) => !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
+  const from = isDate(sp.from) ? sp.from! : '';
+  const to = isDate(sp.to) ? sp.to! : '';
+  const dateField: 'created' | 'delivery' = sp.dateField === 'delivery' ? 'delivery' : 'created';
 
   const perms = await getMyPermissions();
   const canCreate = perms.has('orders.create');
@@ -45,7 +49,7 @@ export default async function OrdersPage({
   const canViewFinance = perms.has('finance.view') || perms.has('finance.transactions.view');
 
   const [orders, counts, employeeOptions] = await Promise.all([
-    getOrders({ q, status, withBalances: canViewFinance || canRecordPayment }),
+    getOrders({ q, status, from, to, dateField, withBalances: canViewFinance || canRecordPayment }),
     getOrderStatusCounts(),
     canProduce || canRecordPayment ? getAgents() : Promise.resolve([]),
   ]);
@@ -63,6 +67,9 @@ export default async function OrdersPage({
     const p = new URLSearchParams();
     if (key) p.set('status', key);
     if (q) p.set('q', q);
+    if (from) p.set('from', from);
+    if (to) p.set('to', to);
+    if ((from || to) && dateField !== 'created') p.set('dateField', dateField);
     const s = p.toString();
     return s ? `/orders?${s}` : '/orders';
   };
@@ -120,19 +127,48 @@ export default async function OrdersPage({
         </nav>
       </div>
 
-      {/* Search */}
+      {/* Search + date filter */}
       <div className="px-5 py-4">
-        <form method="get" className="flex gap-3">
+        <form method="get" className="flex flex-wrap items-end gap-3">
           {status ? <input type="hidden" name="status" value={status} /> : null}
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder={tr(locale, 'Reference, customer…', 'المرجع، العميل…')}
-            className="w-full max-w-md rounded-lg border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-          />
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="q" className="text-xs font-medium text-neutral-500">{tr(locale, 'Search', 'بحث')}</label>
+            <input
+              id="q"
+              name="q"
+              defaultValue={q}
+              placeholder={tr(locale, 'Reference, customer…', 'المرجع، العميل…')}
+              className="w-full min-w-[16rem] rounded-lg border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="dateField" className="text-xs font-medium text-neutral-500">{tr(locale, 'Filter by', 'تصفية حسب')}</label>
+            <select
+              id="dateField"
+              name="dateField"
+              defaultValue={dateField}
+              className="rounded-lg border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+            >
+              <option value="created">{tr(locale, 'Created date', 'تاريخ الإنشاء')}</option>
+              <option value="delivery">{tr(locale, 'Delivery date', 'تاريخ التوصيل')}</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="from" className="text-xs font-medium text-neutral-500">{tr(locale, 'From', 'من')}</label>
+            <input id="from" name="from" type="date" defaultValue={from} className="rounded-lg border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100" />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="to" className="text-xs font-medium text-neutral-500">{tr(locale, 'To', 'إلى')}</label>
+            <input id="to" name="to" type="date" defaultValue={to} className="rounded-lg border border-neutral-300 px-3 py-2.5 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100" />
+          </div>
           <button type="submit" className="rounded-lg bg-amber-400 px-5 py-2.5 text-sm font-semibold text-neutral-900 hover:bg-amber-500">
-            {tr(locale, 'Search', 'بحث')}
+            {tr(locale, 'Apply', 'تطبيق')}
           </button>
+          {q || from || to ? (
+            <Link href={status ? `/orders?status=${status}` : '/orders'} className="rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-500 hover:bg-neutral-100">
+              {tr(locale, 'Clear', 'مسح')}
+            </Link>
+          ) : null}
         </form>
       </div>
 

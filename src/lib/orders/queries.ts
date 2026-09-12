@@ -50,10 +50,18 @@ export async function getOrders({
   status,
   q,
   withBalances,
+  from,
+  to,
+  dateField = 'created',
 }: {
   status?: string;
   q?: string;
   withBalances?: boolean;
+  /** Inclusive yyyy-mm-dd range bounds. */
+  from?: string;
+  to?: string;
+  /** Which date the range applies to. */
+  dateField?: 'created' | 'delivery';
 }): Promise<OrderListRow[]> {
   const supabase = await createClient();
   let query = supabase
@@ -62,6 +70,12 @@ export async function getOrders({
     // Newest first, by when the order was placed (creation time).
     .order('created_at', { ascending: false })
     .limit(2000);
+
+  // Optional date-range filter, on either the creation time or the delivery date.
+  const isDate = (v?: string) => !!v && /^\d{4}-\d{2}-\d{2}$/.test(v);
+  const col = dateField === 'delivery' ? 'delivery_date' : 'created_at';
+  if (isDate(from)) query = query.gte(col, dateField === 'delivery' ? from! : `${from}T00:00:00`);
+  if (isDate(to)) query = query.lte(col, dateField === 'delivery' ? to! : `${to}T23:59:59.999`);
 
   const term = q ? sanitize(q) : '';
   if (term) {
