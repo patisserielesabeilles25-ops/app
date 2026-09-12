@@ -563,6 +563,9 @@ export async function updateOrder(
     }
   }
 
+  // Editing amounts to full payment (advance = grand total) also auto-delivers.
+  await autoDeliverIfFullyPaid(id);
+
   revalidateOrderViews(id);
   redirect(`/orders/${id}?updated=1`);
 }
