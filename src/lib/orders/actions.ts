@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { requirePermission, getMyPermissions } from '@/lib/auth/permissions';
 import { ensureAgentEmployeeId } from '@/lib/agents/resolve';
+import { orderCanonicalStatus } from '@/lib/statuses/derive';
 import { parseSizeNumber } from '@/lib/size';
 import {
   CreateOrderSchema,
@@ -160,6 +161,48 @@ function revalidateOrderViews(id: string) {
   revalidatePath(`/orders/${id}`);
 }
 
+/**
+ * Business rule: once an order is fully paid AND production is READY, it should
+ * no longer sit in the READY column — it moves straight to DELIVERED (for pickup
+ * and delivery orders alike). Uses the service client to set the terminal
+ * delivery status directly (the strict delivery state machine only allows
+ * READY→OUT_FOR_DELIVERY→DELIVERED and only for delivery orders). No-op unless
+ * the order is READY, not returned, not already delivered, and remaining ≤ 0.
+ */
+async function autoDeliverIfFullyPaid(orderId: string): Promise<void> {
+  if (!orderId) return;
+  const service = createServiceClient();
+  const { data: o } = await service
+    .from('orders')
+    .select('production_status, delivery_status, fulfillment, returned_at, reported_at, production_stage, delivery_date')
+    .eq('id', orderId)
+    .maybeSingle();
+  if (!o || o.returned_at || o.delivery_status === 'DELIVERED') return;
+  // Only when the order currently sits in the READY column (canonical status),
+  // which can come from production or delivery state — not just production_status.
+  if (orderCanonicalStatus(o) !== 'READY') return;
+  const { data: fin } = await service
+    .from('order_financials')
+    .select('remaining_amount')
+    .eq('order_id', orderId)
+    .maybeSingle();
+  if (!fin || Number(fin.remaining_amount) > 0.005) return;
+
+  await service
+    .from('orders')
+    .update({ delivery_status: 'DELIVERED', delivered_at: new Date().toISOString() })
+    .eq('id', orderId);
+  await service.from('order_status_history').insert({
+    order_id: orderId,
+    field: 'delivery_status',
+    from_value: o.delivery_status ?? null,
+    to_value: 'DELIVERED',
+    changed_by: null,
+  });
+  revalidatePath('/clients');
+  revalidatePath('/calendar');
+}
+
 /** Shop action: send an order to the laboratory (NEW -> IN_PRODUCTION). */
 export async function sendToLab(formData: FormData): Promise<void> {
   await requirePermission('orders.edit');
@@ -217,6 +260,8 @@ export async function completeStage(formData: FormData): Promise<void> {
   if (error) {
     redirect(`/orders/${id}?error=${encodeURIComponent('Could not complete the stage.')}`);
   }
+  // Finishing the last stage makes it READY; if it's already fully paid, deliver.
+  await autoDeliverIfFullyPaid(id);
   revalidateOrderViews(id);
   redirect(fromList ? '/orders' : `/orders/${id}?stage=${stage}`);
 }
@@ -233,6 +278,8 @@ export async function markOrderReady(formData: FormData): Promise<void> {
   if (error) {
     redirect(`/orders/${id}?error=${encodeURIComponent('Could not mark this order ready.')}`);
   }
+  // If it was already fully paid, skip the READY column entirely → DELIVERED.
+  await autoDeliverIfFullyPaid(id);
   revalidateOrderViews(id);
   redirect(`/orders/${id}?ready=1`);
 }
@@ -548,6 +595,9 @@ export async function recordOrderPayment(
   if (error) {
     return { error: /exceeds/.test(error.message) ? 'Payment exceeds the remaining amount.' : 'Could not record the payment.' };
   }
+
+  // Fully paid + ready → move it out of READY into DELIVERED automatically.
+  await autoDeliverIfFullyPaid(orderId);
 
   revalidateOrderViews(orderId);
   revalidatePath('/finance');
