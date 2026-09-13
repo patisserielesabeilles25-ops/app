@@ -139,9 +139,9 @@ function BarChart({ data, color, format }: {
 }) {
   const max = Math.max(1, ...data.map((d) => d.value));
   return (
-    <div className="flex h-44 items-end justify-between gap-2">
+    <div className="flex h-44 items-stretch justify-between gap-2">
       {data.map((d) => (
-        <div key={d.label} className="group flex flex-1 flex-col items-center gap-1.5">
+        <div key={d.label} className="group flex h-full flex-1 flex-col items-center gap-1.5">
           <span className="text-[10px] font-semibold text-neutral-400 opacity-0 transition group-hover:opacity-100">
             {format ? format(d.value) : d.value}
           </span>
