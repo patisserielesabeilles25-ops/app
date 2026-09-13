@@ -17,6 +17,8 @@ export type OrderAnalytics = {
   avgOrderValue: number;
   returnRate: number;
   reportedRate: number;
+  returnedCount: number;
+  returnReasons: { key: string; count: number }[];
   pickup: number;
   delivery: number;
   topClients: { name: string; orders: number }[];
@@ -48,7 +50,7 @@ export async function getOrderAnalytics(range: Range): Promise<OrderAnalytics> {
     service.from('orders').select('customer_id, created_at').limit(100000),
     service
       .from('orders')
-      .select('id, customer_id, cake_size_cm, fulfillment, returned_at, reported_at, delivery_date, created_at, product_id')
+      .select('id, customer_id, cake_size_cm, fulfillment, returned_at, return_reason, reported_at, delivery_date, created_at, product_id')
       .gte('created_at', range.from)
       .lte('created_at', range.to)
       .limit(100000),
@@ -102,11 +104,16 @@ export async function getOrderAnalytics(range: Range): Promise<OrderAnalytics> {
   let reported = 0;
   const sizeCounts = new Map<number, number>();
   const productCounts = new Map<string, number>();
+  const reasonCounts = new Map<string, number>();
   const weekdayCounts = new Array(7).fill(0);
   for (const o of period) {
     if (o.fulfillment === 'DELIVERY') delivery += 1;
     else pickup += 1;
-    if (o.returned_at) returned += 1;
+    if (o.returned_at) {
+      returned += 1;
+      const key = (o.return_reason as string | null)?.trim() || 'UNSPECIFIED';
+      reasonCounts.set(key, (reasonCounts.get(key) ?? 0) + 1);
+    }
     if (o.reported_at) reported += 1;
     const s = num(o.cake_size_cm);
     if (s > 0) sizeCounts.set(s, (sizeCounts.get(s) ?? 0) + 1);
@@ -120,6 +127,9 @@ export async function getOrderAnalytics(range: Range): Promise<OrderAnalytics> {
   const totalOrders = period.length;
   const returnRate = totalOrders ? (returned / totalOrders) * 100 : 0;
   const reportedRate = totalOrders ? (reported / totalOrders) * 100 : 0;
+  const returnReasons = [...reasonCounts.entries()]
+    .map(([key, count]) => ({ key, count }))
+    .sort((a, b) => b.count - a.count);
 
   // Revenue / collected / outstanding from financials of the period's orders.
   const periodIds = period.map((o) => o.id as string);
@@ -214,6 +224,8 @@ export async function getOrderAnalytics(range: Range): Promise<OrderAnalytics> {
     avgOrderValue,
     returnRate,
     reportedRate,
+    returnedCount: returned,
+    returnReasons,
     pickup,
     delivery,
     topClients,

@@ -1,10 +1,10 @@
 'use server';
 
-import { redirect } from 'next/navigation';
+import { redirect, forbidden } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
-import { requirePermission, getMyPermissions } from '@/lib/auth/permissions';
+import { requirePermission, getMyPermissions, getMyRoleKeys } from '@/lib/auth/permissions';
 import { ensureAgentEmployeeId } from '@/lib/agents/resolve';
 import { orderCanonicalStatus } from '@/lib/statuses/derive';
 import { parseSizeNumber } from '@/lib/size';
@@ -348,9 +348,16 @@ export async function deleteOrder(formData: FormData): Promise<void> {
   redirect('/orders?deleted=1');
 }
 
+/** Cancelling/returning an order is restricted to admin and vendeur (business rule). */
+async function requireReturnRole(): Promise<void> {
+  await requirePermission('orders.edit');
+  const roles = await getMyRoleKeys();
+  if (!(roles.has('admin') || roles.has('vendeur'))) forbidden();
+}
+
 /** Mark an order as returned/refused (feeds the client "returned" badge). */
 export async function markOrderReturned(formData: FormData): Promise<void> {
-  await requirePermission('orders.edit');
+  await requireReturnRole();
   const id = String(formData.get('orderId') ?? '');
   const reason = String(formData.get('reason') ?? '').trim();
   const supabase = await createClient();
@@ -371,7 +378,7 @@ export async function markOrderReturned(formData: FormData): Promise<void> {
 
 /** Undo a returned mark. */
 export async function unmarkOrderReturned(formData: FormData): Promise<void> {
-  await requirePermission('orders.edit');
+  await requireReturnRole();
   const id = String(formData.get('orderId') ?? '');
   const supabase = await createClient();
   const { error } = await supabase.rpc('unmark_order_returned', { p_order_id: id });

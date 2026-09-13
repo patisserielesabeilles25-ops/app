@@ -4,9 +4,8 @@ import Link from 'next/link';
 import { Printer, Pencil, CalendarClock, PackageX, Undo2, MousePointerClick } from 'lucide-react';
 import { useOrderSelection } from '@/components/orders/OrderSelection';
 import { ReportOrderDialog } from '@/components/orders/ReportOrderDialog';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { ReturnOrderDialog } from '@/components/orders/ReturnOrderDialog';
 import {
-  markOrderReturned,
   unmarkOrderReturned,
   unreportOrder,
 } from '@/lib/orders/actions';
@@ -33,9 +32,11 @@ const DISABLED = 'cursor-not-allowed opacity-40';
 export function OrdersActionBar({
   orders,
   canEdit,
+  canReturn,
 }: {
   orders: ToolbarOrder[];
   canEdit: boolean;
+  canReturn: boolean;
 }) {
   const locale = useLocale();
   const { selectedId } = useOrderSelection();
@@ -98,8 +99,8 @@ export function OrdersActionBar({
             )
           ) : null}
 
-          {/* Mark returned / Clear returned */}
-          {canEdit ? (
+          {/* Mark returned / Clear returned — admin + vendeur only */}
+          {canReturn ? (
             order.returned_at ? (
               <form action={unmarkOrderReturned}>
                 <input type="hidden" name="orderId" value={order.id} />
@@ -109,23 +110,7 @@ export function OrdersActionBar({
                 </button>
               </form>
             ) : (
-              <ConfirmDialog
-                triggerLabel={
-                  <span className={`${BTN} ${RED}`}>
-                    <PackageX className="h-4 w-4" />
-                    {tr(locale, 'Mark returned', 'تحديد كمُرتجع')}
-                  </span>
-                }
-                title={tr(locale, 'Mark this order as returned?', 'تحديد هذا الطلب كمُرتجع؟')}
-                description={tr(
-                  locale,
-                  "Use this when the customer returned or refused the order. It will count toward the client's returned badge. You can undo this later.",
-                  'استخدم هذا عندما يُرجع العميل الطلب أو يرفضه. سيُحتسب ضمن شارة المُرتجعات الخاصة بالعميل. يمكنك التراجع عن ذلك لاحقًا.',
-                )}
-                confirmLabel={tr(locale, 'Mark returned', 'تحديد كمُرتجع')}
-                action={markOrderReturned}
-                hiddenFields={{ orderId: order.id }}
-              />
+              <ReturnOrderDialog orderId={order.id} />
             )
           ) : null}
         </div>
@@ -146,11 +131,13 @@ export function OrdersActionBar({
                 <CalendarClock className="h-4 w-4" />
                 {tr(locale, 'Reschedule', 'تأجيل')}
               </span>
-              <span className={`${BTN} ${RED} ${DISABLED}`}>
-                <PackageX className="h-4 w-4" />
-                {tr(locale, 'Mark returned', 'تحديد كمُرتجع')}
-              </span>
             </>
+          ) : null}
+          {canReturn ? (
+            <span className={`${BTN} ${RED} ${DISABLED}`}>
+              <PackageX className="h-4 w-4" />
+              {tr(locale, 'Mark returned', 'تحديد كمُرتجع')}
+            </span>
           ) : null}
         </div>
       )}

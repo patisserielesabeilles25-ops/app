@@ -8,6 +8,7 @@ import { requirePermission } from '@/lib/auth/permissions';
 import { createClient } from '@/lib/supabase/server';
 import { getRange, getCustomRange, financeSummary, financeByCategory, type PeriodPreset } from '@/lib/finance/reports';
 import { getOrderAnalytics } from '@/lib/finance/analytics';
+import { returnReasonLabel } from '@/lib/orders/returnReasons';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { formatAmount } from '@/lib/utils';
@@ -30,6 +31,9 @@ function presetLabel(locale: Locale, key: PeriodPreset): string {
 
 const pct = (v: number) => `${v.toFixed(0)}%`;
 const DA = (v: number) => `${formatAmount(v)} DA`;
+
+// Distinct colors for the cancellation-reasons donut.
+const REASON_COLORS = ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#a3a3a3'];
 
 // ---- Accent palette -------------------------------------------------------
 type Accent = 'emerald' | 'amber' | 'rose' | 'sky' | 'violet' | 'indigo' | 'neutral';
@@ -77,9 +81,9 @@ function MiniStat({ icon: Icon, label, value, accent = 'neutral' }: {
 }
 
 /** SVG donut with a centered total. Segments are {value, color, label}. */
-function Donut({ segments, centerLabel, centerValue }: {
+function Donut({ segments, centerLabel, centerValue, showPercent = false }: {
   segments: { value: number; color: string; label: string }[];
-  centerLabel: string; centerValue: string;
+  centerLabel: string; centerValue: string; showPercent?: boolean;
 }) {
   const size = 160, thickness = 22;
   const total = segments.reduce((s, x) => s + x.value, 0) || 1;
@@ -109,12 +113,15 @@ function Donut({ segments, centerLabel, centerValue }: {
         <text x="50%" y="47%" textAnchor="middle" className="fill-neutral-900" style={{ fontSize: 26, fontWeight: 700 }}>{centerValue}</text>
         <text x="50%" y="62%" textAnchor="middle" className="fill-neutral-400" style={{ fontSize: 12 }}>{centerLabel}</text>
       </svg>
-      <ul className="space-y-2 text-sm">
+      <ul className="min-w-0 flex-1 space-y-2 text-sm">
         {segments.map((s, i) => (
           <li key={i} className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full" style={{ background: s.color }} />
-            <span className="text-neutral-600">{s.label}</span>
+            <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: s.color }} />
+            <span className="min-w-0 flex-1 truncate text-neutral-600">{s.label}</span>
             <span className="font-semibold text-neutral-800">{s.value}</span>
+            {showPercent ? (
+              <span className="w-10 text-right text-xs text-neutral-400">{Math.round((s.value / total) * 100)}%</span>
+            ) : null}
           </li>
         ))}
       </ul>
@@ -350,6 +357,34 @@ export default async function ReportsPage({
               <p className="text-sm text-neutral-400">{tr(locale, 'No expenses in this period.', 'لا مصاريف في هذه الفترة.')}</p>
             ) : (
               <HBars rows={expenseRows} color="#f43f5e" format={DA} />
+            )}
+          </CardBody>
+        </Card>
+      </div>
+
+      {/* Cancellation reasons */}
+      <div className="mb-6">
+        <Card>
+          <CardHeader
+            title={tr(locale, 'Cancellation reasons', 'أسباب الإلغاء')}
+            description={tr(locale, 'Why orders were cancelled in this period', 'أسباب إلغاء الطلبات في هذه الفترة')}
+          />
+          <CardBody>
+            {a.returnedCount === 0 ? (
+              <p className="text-sm text-neutral-400">{tr(locale, 'No cancellations in this period.', 'لا توجد إلغاءات في هذه الفترة.')}</p>
+            ) : (
+              <Donut
+                showPercent
+                centerValue={String(a.returnedCount)}
+                centerLabel={tr(locale, 'cancellations', 'إلغاء')}
+                segments={a.returnReasons.map((r, i) => ({
+                  value: r.count,
+                  color: REASON_COLORS[i % REASON_COLORS.length],
+                  label: r.key === 'UNSPECIFIED'
+                    ? tr(locale, 'Unspecified', 'غير محدّد')
+                    : returnReasonLabel(r.key, locale),
+                }))}
+              />
             )}
           </CardBody>
         </Card>

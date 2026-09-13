@@ -1,19 +1,19 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { Pencil, Send, ArrowLeft, CheckCircle2, AlertTriangle, PackageX, Undo2, Truck, Printer } from 'lucide-react';
-import { requirePermission, getMyPermissions } from '@/lib/auth/permissions';
+import { Pencil, Send, ArrowLeft, CheckCircle2, AlertTriangle, Undo2, Truck, Printer } from 'lucide-react';
+import { requirePermission, getMyPermissions, getMyRoleKeys } from '@/lib/auth/permissions';
 import { getOrderDetail, getOrderStatusHistory, getOrderStages } from '@/lib/orders/queries';
 import { getAgents } from '@/lib/agents/queries';
 import { getSignedOrderImageUrl } from '@/lib/orders/images';
-import { startProduction, markOutForDelivery, markDelivered, markOrderReturned, unmarkOrderReturned, unreportOrder } from '@/lib/orders/actions';
+import { startProduction, markOutForDelivery, markDelivered, unmarkOrderReturned, unreportOrder } from '@/lib/orders/actions';
 import { PaymentForm } from '@/components/orders/PaymentForm';
 import { StageForm } from '@/components/orders/StageForm';
 import { ReportOrderDialog } from '@/components/orders/ReportOrderDialog';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Button, LinkButton } from '@/components/ui/Button';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { ReturnOrderDialog } from '@/components/orders/ReturnOrderDialog';
 import {
   CanonicalStatusBadge,
   DeliveryStatusBadge,
@@ -90,6 +90,8 @@ export default async function OrderDetailPage({
   const canProduce = perms.has('production.update');
   const canDeliver = perms.has('delivery.update');
   const canRecordPayment = perms.has('finance.income.create');
+  const roleKeys = await getMyRoleKeys();
+  const canReturn = roleKeys.has('admin') || roleKeys.has('vendeur');
 
   const imageUrl = image
     ? await getSignedOrderImageUrl(image.bucket, image.object_path)
@@ -170,22 +172,10 @@ export default async function OrderDetailPage({
                 />
               )
             ) : null}
-            {canEdit && !order.returned_at ? (
-              <ConfirmDialog
-                triggerLabel={
-                  <span className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50">
-                    <PackageX className="h-4 w-4" />
-                    {tr(locale, 'Mark returned', 'تحديد كمُرتجع')}
-                  </span>
-                }
-                title={tr(locale, 'Mark this order as returned?', 'تحديد هذا الطلب كمُرتجع؟')}
-                description={tr(locale, "Use this when the customer returned or refused the order. It will count toward the client's returned badge. You can undo this later.", 'استخدم هذا عندما يُرجع العميل الطلب أو يرفضه. سيُحتسب ضمن شارة المُرتجعات الخاصة بالعميل. يمكنك التراجع عن ذلك لاحقًا.')}
-                confirmLabel={tr(locale, 'Mark returned', 'تحديد كمُرتجع')}
-                action={markOrderReturned}
-                hiddenFields={{ orderId: order.id }}
-              />
+            {canReturn && !order.returned_at ? (
+              <ReturnOrderDialog orderId={order.id} />
             ) : null}
-            {canEdit && order.returned_at ? (
+            {canReturn && order.returned_at ? (
               <form action={unmarkOrderReturned}>
                 <input type="hidden" name="orderId" value={order.id} />
                 <Button type="submit" variant="secondary">

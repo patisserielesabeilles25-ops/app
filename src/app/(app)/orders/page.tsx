@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ShoppingCart, Plus, ClipboardList, CheckCircle2, Printer, Phone, MessageCircle, Pencil } from 'lucide-react';
-import { requirePermission, getMyPermissions } from '@/lib/auth/permissions';
+import { requirePermission, getMyPermissions, getMyRoleKeys } from '@/lib/auth/permissions';
 import { getOrders, getOrderStatusCounts } from '@/lib/orders/queries';
 import { getAgents } from '@/lib/agents/queries';
 import { OrderStageAdvance } from '@/components/orders/OrderStageAdvance';
@@ -47,6 +47,8 @@ export default async function OrdersPage({
   const canProduce = perms.has('production.update') || canEdit;
   const canRecordPayment = perms.has('finance.income.create');
   const canViewFinance = perms.has('finance.view') || perms.has('finance.transactions.view');
+  const roleKeys = await getMyRoleKeys();
+  const canReturn = roleKeys.has('admin') || roleKeys.has('vendeur');
 
   const [orders, counts, employeeOptions] = await Promise.all([
     getOrders({ q, status, from, to, dateField, withBalances: canViewFinance || canRecordPayment }),
@@ -173,7 +175,7 @@ export default async function OrdersPage({
       </div>
 
       <OrderSelectionProvider>
-      <OrdersActionBar orders={toolbarOrders} canEdit={canEdit} />
+      <OrdersActionBar orders={toolbarOrders} canEdit={canEdit} canReturn={canReturn} />
 
       {sp.deleted ? (
         <div className="mx-5 mb-4 flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
