@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { createServiceClient } from '@/lib/supabase/service';
+import { orderCanonicalStatus } from '@/lib/statuses/derive';
 import type { Range } from '@/lib/reports/period';
 
 export type OrderAnalytics = {
@@ -50,7 +51,7 @@ export async function getOrderAnalytics(range: Range): Promise<OrderAnalytics> {
     service.from('orders').select('customer_id, created_at').limit(100000),
     service
       .from('orders')
-      .select('id, customer_id, cake_size_cm, fulfillment, returned_at, return_reason, reported_at, delivery_date, created_at, product_id')
+      .select('id, customer_id, cake_size_cm, fulfillment, returned_at, return_reason, reported_at, delivery_status, production_status, production_stage, delivery_date, created_at, product_id')
       .gte('created_at', range.from)
       .lte('created_at', range.to)
       .limit(100000),
@@ -114,7 +115,9 @@ export async function getOrderAnalytics(range: Range): Promise<OrderAnalytics> {
       const key = (o.return_reason as string | null)?.trim() || 'UNSPECIFIED';
       reasonCounts.set(key, (reasonCounts.get(key) ?? 0) + 1);
     }
-    if (o.reported_at) reported += 1;
+    // "Postponed" = scheduled for later (canonical REPORTED), matching the
+    // orders list — not just orders explicitly rescheduled (reported_at).
+    if (orderCanonicalStatus(o as Parameters<typeof orderCanonicalStatus>[0]) === 'REPORTED') reported += 1;
     const s = num(o.cake_size_cm);
     if (s > 0) sizeCounts.set(s, (sizeCounts.get(s) ?? 0) + 1);
     const pid = o.product_id as string | null;

@@ -47,28 +47,31 @@ const ACCENT: Record<Accent, { chip: string; value: string; bar: string }> = {
   neutral: { chip: 'bg-neutral-100 text-neutral-600', value: 'text-neutral-900', bar: '#a3a3a3' },
 };
 
-function StatCard({ icon: Icon, label, value, sub, accent = 'neutral' }: {
-  icon: LucideIcon; label: string; value: string; sub?: string; accent?: Accent;
+function StatCard({ icon: Icon, label, value, sub, accent = 'neutral', href }: {
+  icon: LucideIcon; label: string; value: string; sub?: string; accent?: Accent; href?: string;
 }) {
   const c = ACCENT[accent];
-  return (
-    <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5">
+  const cls = `block rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5${href ? ' hover:border-amber-300' : ''}`;
+  const inner = (
+    <>
       <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${c.chip}`}>
         <Icon className="h-5 w-5" />
       </span>
       <p className={`mt-3 text-2xl font-bold tracking-tight ${c.value}`}>{value}</p>
       <p className="text-sm font-medium text-neutral-600">{label}</p>
       {sub ? <p className="mt-0.5 text-xs text-neutral-400">{sub}</p> : null}
-    </div>
+    </>
   );
+  return href ? <Link href={href} className={cls}>{inner}</Link> : <div className={cls}>{inner}</div>;
 }
 
-function MiniStat({ icon: Icon, label, value, accent = 'neutral' }: {
-  icon: LucideIcon; label: string; value: string; accent?: Accent;
+function MiniStat({ icon: Icon, label, value, accent = 'neutral', href }: {
+  icon: LucideIcon; label: string; value: string; accent?: Accent; href?: string;
 }) {
   const c = ACCENT[accent];
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white px-3.5 py-3 shadow-sm">
+  const cls = `flex items-center gap-3 rounded-xl border border-neutral-200 bg-white px-3.5 py-3 shadow-sm transition${href ? ' hover:border-amber-300 hover:shadow-md' : ''}`;
+  const inner = (
+    <>
       <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${c.chip}`}>
         <Icon className="h-4.5 w-4.5" />
       </span>
@@ -76,8 +79,9 @@ function MiniStat({ icon: Icon, label, value, accent = 'neutral' }: {
         <p className={`text-lg font-bold leading-tight ${c.value}`}>{value}</p>
         <p className="truncate text-xs text-neutral-500">{label}</p>
       </div>
-    </div>
+    </>
   );
+  return href ? <Link href={href} className={cls}>{inner}</Link> : <div className={cls}>{inner}</div>;
 }
 
 /** SVG donut with a centered total. Segments are {value, color, label}. */
@@ -295,22 +299,22 @@ export default async function ReportsPage({
 
       {/* Primary KPIs */}
       <div className="mb-4 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
-        <StatCard icon={TrendingUp} accent="emerald" label={tr(locale, 'Revenue', 'رقم الأعمال')} value={DA(a.revenue)} sub={`${a.totalOrders} ${tr(locale, 'orders', 'طلبات')}`} />
-        <StatCard icon={Receipt} accent="rose" label={tr(locale, 'Expenses', 'المصاريف')} value={DA(summary.expense)} sub={`${summary.expense_count} ${tr(locale, 'entries', 'حركات')}`} />
-        <StatCard icon={Banknote} accent={net >= 0 ? 'indigo' : 'rose'} label={tr(locale, 'Net (rev. − exp.)', 'الصافي (أعمال − مصاريف)')} value={DA(net)} sub={tr(locale, 'estimated margin', 'الهامش التقديري')} />
-        <StatCard icon={ShoppingBag} accent="amber" label={tr(locale, 'Average order', 'متوسط الطلب')} value={DA(a.avgOrderValue)} sub={tr(locale, 'per order', 'لكل طلب')} />
-        <StatCard icon={Wallet} accent="sky" label={tr(locale, 'Collected', 'محصّل')} value={DA(a.collected)} sub={tr(locale, 'already paid', 'مدفوع بالفعل')} />
-        <StatCard icon={Clock3} accent="amber" label={tr(locale, 'To collect', 'مستحق التحصيل')} value={DA(a.outstanding)} sub={tr(locale, 'remaining due', 'المتبقي المستحق')} />
-        <StatCard icon={Users} accent="violet" label={tr(locale, 'Active clients', 'العملاء النشطون')} value={String(a.activeClients)} sub={tr(locale, 'this period', 'هذه الفترة')} />
-        <StatCard icon={UserPlus} accent="emerald" label={tr(locale, 'New clients', 'عملاء جدد')} value={String(a.newClients)} sub={tr(locale, 'first order', 'أول طلب')} />
+        <StatCard icon={TrendingUp} accent="emerald" href="/finance/transactions?type=INCOME" label={tr(locale, 'Revenue', 'رقم الأعمال')} value={DA(a.revenue)} sub={`${a.totalOrders} ${tr(locale, 'orders', 'طلبات')}`} />
+        <StatCard icon={Receipt} accent="rose" href="/finance/transactions?type=EXPENSE" label={tr(locale, 'Expenses', 'المصاريف')} value={DA(summary.expense)} sub={`${summary.expense_count} ${tr(locale, 'entries', 'حركات')}`} />
+        <StatCard icon={Banknote} accent={net >= 0 ? 'indigo' : 'rose'} href="/finance/transactions" label={tr(locale, 'Net (rev. − exp.)', 'الصافي (أعمال − مصاريف)')} value={DA(net)} sub={tr(locale, 'estimated margin', 'الهامش التقديري')} />
+        <StatCard icon={ShoppingBag} accent="amber" href="/orders" label={tr(locale, 'Average order', 'متوسط الطلب')} value={DA(a.avgOrderValue)} sub={tr(locale, 'per order', 'لكل طلب')} />
+        <StatCard icon={Wallet} accent="sky" href="/finance/transactions?type=INCOME" label={tr(locale, 'Collected', 'محصّل')} value={DA(a.collected)} sub={tr(locale, 'already paid', 'مدفوع بالفعل')} />
+        <StatCard icon={Clock3} accent="amber" href="/orders" label={tr(locale, 'To collect', 'مستحق التحصيل')} value={DA(a.outstanding)} sub={tr(locale, 'remaining due', 'المتبقي المستحق')} />
+        <StatCard icon={Users} accent="violet" href="/clients" label={tr(locale, 'Active clients', 'العملاء النشطون')} value={String(a.activeClients)} sub={tr(locale, 'this period', 'هذه الفترة')} />
+        <StatCard icon={UserPlus} accent="emerald" href="/clients" label={tr(locale, 'New clients', 'عملاء جدد')} value={String(a.newClients)} sub={tr(locale, 'first order', 'أول طلب')} />
       </div>
 
       {/* Secondary rate chips */}
       <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        <MiniStat icon={Trophy} accent="emerald" label={tr(locale, 'Recurring clients', 'العملاء المتكررون')} value={pct(a.recurrentPct)} />
-        <MiniStat icon={RotateCcw} accent={a.returnRate > 0 ? 'rose' : 'neutral'} label={tr(locale, 'Return rate', 'معدل الإرجاع')} value={pct(a.returnRate)} />
-        <MiniStat icon={CalendarClock} accent={a.reportedRate > 0 ? 'amber' : 'neutral'} label={tr(locale, 'Postponed', 'مؤجلة')} value={pct(a.reportedRate)} />
-        <MiniStat icon={Truck} accent="sky" label={tr(locale, 'Delivery / Pickup', 'توصيل / استلام')} value={`${a.delivery} / ${a.pickup}`} />
+        <MiniStat icon={Trophy} accent="emerald" href="/clients" label={tr(locale, 'Recurring clients', 'العملاء المتكررون')} value={pct(a.recurrentAllTimePct)} />
+        <MiniStat icon={RotateCcw} accent={a.returnRate > 0 ? 'rose' : 'neutral'} href="/orders?status=RETURNED" label={tr(locale, 'Return rate', 'معدل الإرجاع')} value={pct(a.returnRate)} />
+        <MiniStat icon={CalendarClock} accent={a.reportedRate > 0 ? 'amber' : 'neutral'} href="/orders?status=REPORTED" label={tr(locale, 'Postponed', 'مؤجلة')} value={pct(a.reportedRate)} />
+        <MiniStat icon={Truck} accent="sky" href="/orders" label={tr(locale, 'Delivery / Pickup', 'توصيل / استلام')} value={`${a.delivery} / ${a.pickup}`} />
       </div>
 
       {/* Charts row 1 */}
