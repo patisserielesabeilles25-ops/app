@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { requirePermission } from '@/lib/auth/permissions';
 import { ensureAgentEmployeeId } from '@/lib/agents/resolve';
-import { ACCEPTED_FINANCE_TYPES, MAX_FINANCE_BYTES } from '@/lib/validation/finance';
 
 export type MagasinState = { error?: string };
 
@@ -63,24 +62,13 @@ export async function recordMagasinExpense(
   if (!(amount > 0)) return { error: 'Enter a valid amount.' };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: 'Choose a valid date.' };
 
-  // Optional receipt.
-  let imagePath: string | null = null;
-  let imageMime: string | null = null;
-  let imageSize: number | null = null;
-  const file = formData.get('attachment');
-  if (file instanceof File && file.size > 0) {
-    if (!ACCEPTED_FINANCE_TYPES.includes(file.type)) return { error: 'Receipt must be JPEG, PNG, WEBP, or PDF.' };
-    if (file.size > MAX_FINANCE_BYTES) return { error: 'Receipt must be 5 MB or smaller.' };
-    const service = createServiceClient();
-    const path = `${crypto.randomUUID()}/${(file.name || 'receipt').replace(/[^a-zA-Z0-9._-]/g, '_').slice(-80)}`;
-    const { error: upErr } = await service.storage
-      .from('finance-attachments')
-      .upload(path, file, { contentType: file.type, upsert: false });
-    if (upErr) return { error: 'Receipt upload failed.' };
-    imagePath = path;
-    imageMime = file.type;
-    imageSize = file.size;
-  }
+  // Optional receipt: already uploaded to Storage directly from the browser
+  // (see financeAttachmentUploadUrl), so its bytes never pass through this
+  // server action (whose body Next caps at 1 MB / Vercel at ~4.5 MB).
+  const imagePath = ((formData.get('attachmentPath') as string) || '').trim() || null;
+  const imageMime = ((formData.get('attachmentMime') as string) || '').trim() || null;
+  const attachmentSizeRaw = formData.get('attachmentSize');
+  const imageSize = attachmentSizeRaw ? Number(attachmentSizeRaw) : null;
 
   const supabase = await createClient();
   const { error } = await supabase.rpc('record_magasin_expense', {

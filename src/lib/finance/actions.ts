@@ -84,7 +84,12 @@ export async function financeAttachmentUploadUrl(
   name: string,
 ): Promise<{ path: string; token: string } | { error: string }> {
   const perms = await getMyPermissions();
-  if (!perms.has('finance.income.create') && !perms.has('finance.expense.create')) {
+  if (
+    !perms.has('finance.income.create') &&
+    !perms.has('finance.expense.create') &&
+    !perms.has('magasin.expense.create') &&
+    !perms.has('magasin.sale.create')
+  ) {
     return { error: 'You are not allowed to upload receipts.' };
   }
   if (!ACCEPTED_FINANCE_TYPES.includes(mime)) {
