@@ -16,7 +16,7 @@ import { getLocale } from '@/lib/i18n/server';
 
 export const metadata = { title: 'Calendar — Nahla Cake Panel' };
 
-const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const WEEKDAYS = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 const WEEKDAYS_AR: Record<string, string> = {
   Mon: 'الإثنين',
   Tue: 'الثلاثاء',
@@ -49,8 +49,8 @@ export default async function CalendarPage({
 
   const byDay = await getMonthOrders(year, month);
 
-  // Grid math (Monday-first)
-  const firstDow = (new Date(year, month - 1, 1).getDay() + 6) % 7;
+  // Grid math (Saturday-first): Sat=0, Sun=1, … Fri=6.
+  const firstDow = (new Date(year, month - 1, 1).getDay() + 1) % 7;
   const daysInMonth = new Date(year, month, 0).getDate();
   const cells: (number | null)[] = [];
   for (let i = 0; i < firstDow; i++) cells.push(null);
