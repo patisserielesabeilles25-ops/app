@@ -32,6 +32,29 @@ export async function ensureAgentEmployeeId(
     .maybeSingle();
   const fullName = (profile?.full_name as string | null)?.trim() || 'Agent';
 
+  // Adopt an existing UNLINKED employee with the same name instead of creating a
+  // duplicate. Without this, a standalone employee (e.g. added before the "users
+  // are agents" model, profile_id = null) plus this user would show up twice in
+  // payroll/attendance. We only ever match rows not yet tied to any profile.
+  if (fullName !== 'Agent') {
+    const { data: adoptable } = await service
+      .from('employees')
+      .select('id')
+      .eq('full_name', fullName)
+      .is('profile_id', null)
+      .eq('is_active', true)
+      .order('created_at', { ascending: true })
+      .limit(1);
+    const orphanId = adoptable?.[0]?.id as string | undefined;
+    if (orphanId) {
+      const { error: linkErr } = await service
+        .from('employees')
+        .update({ profile_id: id })
+        .eq('id', orphanId);
+      if (!linkErr) return orphanId;
+    }
+  }
+
   const { data: created, error } = await service
     .from('employees')
     .insert({
