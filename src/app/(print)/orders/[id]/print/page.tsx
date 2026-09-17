@@ -26,11 +26,11 @@ function arInvoiceDate(dateStr: string, timeStr: string): string {
 function MiniField({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div
-      className="rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1"
+      className="rounded-xl px-2 py-1 flex items-center justify-between gap-1 min-h-[26px]"
       style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
     >
-      <span className="font-bold text-neutral-950 text-[10px] shrink-0">{label} : </span>
-      <span className="font-semibold text-neutral-900 text-[10px] truncate">{value}</span>
+      <span className="font-bold text-neutral-950 text-[9px] shrink-0">{label} : </span>
+      <span className="font-semibold text-neutral-900 text-[8.5px] leading-tight">{value}</span>
     </div>
   );
 }
@@ -38,13 +38,13 @@ function MiniField({ label, value }: { label: string; value: React.ReactNode }) 
 function MiniAmountLine({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-1">
-      <span className="font-bold text-neutral-950 text-[9.5px] whitespace-nowrap">{label} :</span>
-      <span className="font-semibold text-neutral-900 text-[9.5px] whitespace-nowrap">{value}</span>
+      <span className="font-bold text-neutral-950 text-[9px] whitespace-nowrap">{label} :</span>
+      <span className="font-semibold text-neutral-900 text-[9px] whitespace-nowrap">{value}</span>
     </div>
   );
 }
 
-/** One compact bon copy — wider banner and restored dynamic yellow box fill */
+/** One compact bon copy — wider banner, no text truncation */
 function BonQuarter({
   order,
   financials,
@@ -78,7 +78,7 @@ function BonQuarter({
       {/* 1. Header Banner - Full Width */}
       <div className="border-b border-neutral-200 pb-1 mb-1.5 shrink-0" dir="ltr">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/Banner.png" alt="Les Abeilles" className="w-full h-auto max-h-[55px] object-contain" />
+        <img src="/Banner.png" alt="Les Abeilles" className="w-full h-auto max-h-[75px] object-fill" />
       </div>
 
       {/* 2. Customer fields (2x2 grid) */}
@@ -89,7 +89,7 @@ function BonQuarter({
         <MiniField label="التاريخ" value={arInvoiceDate(order.delivery_date, order.delivery_time)} />
       </div>
 
-      {/* 3. Middle area: Restored flex-1 dynamic fill height */}
+      {/* 3. Middle area: Flex-1 dynamic fill height */}
       <div className="flex-1 grid grid-cols-2 gap-1.5 min-h-0 mb-1.5">
         {/* Column 1 (Right in RTL): Tall Image Card - fills 100% height */}
         <div
@@ -118,13 +118,13 @@ function BonQuarter({
             <MiniAmountLine label="مبلغ التوصيل" value={amt(financials?.delivery_amount)} />
           </div>
 
-          {/* Details / Description Card - Restored flex-1 dynamic height */}
+          {/* Details / Description Card */}
           <div
             className="flex-1 rounded-xl px-2.5 py-2 flex flex-col justify-start min-h-0 overflow-hidden"
             style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
           >
-            <span className="font-bold text-neutral-950 text-[10px] block mb-0.5">تفاصيل النموذج : </span>
-            <span className="text-neutral-900 text-[9.5px] leading-snug overflow-y-auto">{order.description || ''}</span>
+            <span className="font-bold text-neutral-950 text-[9.5px] block mb-0.5">تفاصيل النموذج : </span>
+            <span className="text-neutral-900 text-[9px] leading-snug overflow-y-auto">{order.description || ''}</span>
           </div>
         </div>
       </div>
