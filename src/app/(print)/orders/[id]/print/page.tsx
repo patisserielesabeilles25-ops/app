@@ -26,7 +26,7 @@ function arInvoiceDate(dateStr: string, timeStr: string): string {
 function MiniField({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div
-      className="rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1"
+      className="rounded-2xl px-2.5 py-1.5 flex items-center justify-between gap-1"
       style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
     >
       <span className="font-bold text-neutral-950 text-[10px] shrink-0">{label} : </span>
@@ -44,7 +44,7 @@ function MiniAmountLine({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** One compact bon copy — designed to perfectly fill quarter-A4 with flex-1 image & description */
+/** One compact bon copy — cleanly proportioned 2x2 quarter card */
 function BonQuarter({
   order,
   financials,
@@ -72,43 +72,43 @@ function BonQuarter({
 }) {
   return (
     <div
-      className="bon-quarter flex flex-col h-full p-2.5 bg-white rounded-xl border border-neutral-200 overflow-hidden box-border"
+      className="bon-quarter flex flex-col justify-between p-3 bg-white rounded-2xl border border-neutral-200 overflow-hidden box-border h-full"
       dir="rtl"
     >
       {/* 1. Header Banner */}
-      <div className="border-b border-neutral-200 pb-1 mb-1.5 shrink-0" dir="ltr">
+      <div className="border-b border-neutral-200 pb-1 mb-1.5" dir="ltr">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/Banner.png" alt="Les Abeilles" className="w-full h-auto max-h-[42px] object-contain mx-auto" />
       </div>
 
       {/* 2. Customer fields (2x2 grid) */}
-      <div className="grid grid-cols-2 gap-1.5 mb-1.5 shrink-0">
+      <div className="grid grid-cols-2 gap-1.5 mb-1.5">
         <MiniField label="رقم الهاتف" value={order.customer_phone} />
         <MiniField label="الإسم" value={order.customer_name} />
         <MiniField label="التوصيل" value={order.fulfillment === 'DELIVERY' ? 'توصيل' : 'استلام من المحل'} />
         <MiniField label="التاريخ" value={arInvoiceDate(order.delivery_date, order.delivery_time)} />
       </div>
 
-      {/* 3. Middle area: FLEX-1 GROW to fill all vertical space & eliminate white gaps */}
-      <div className="flex-1 grid grid-cols-2 gap-1.5 min-h-0 mb-1.5">
-        {/* Column 1 (Right in RTL): Tall Image Card - fills 100% height */}
+      {/* 3. Middle area: Image on Right (in RTL), Amounts & Description on Left (in RTL) */}
+      <div className="grid grid-cols-2 gap-1.5 items-stretch mb-1.5">
+        {/* Column 1 (Right in RTL): Image Card */}
         <div
-          className="flex items-center justify-center overflow-hidden rounded-xl h-full p-1.5"
+          className="flex items-center justify-center overflow-hidden rounded-2xl p-1.5 h-[165px]"
           style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
         >
           {imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={imageUrl} alt="Modèle" className="h-full w-full object-contain rounded-lg" />
+            <img src={imageUrl} alt="Modèle" className="max-h-[155px] w-full object-contain rounded-lg" />
           ) : (
             <span className="text-4xl">🎂</span>
           )}
         </div>
 
-        {/* Column 2 (Left in RTL): Amounts Card + Description Card - fills 100% height */}
-        <div className="flex flex-col gap-1.5 h-full min-h-0">
+        {/* Column 2 (Left in RTL): Amounts Card + Description Card */}
+        <div className="flex flex-col gap-1.5 justify-between h-[165px]">
           {/* Amounts Card */}
           <div
-            className="rounded-xl px-2.5 py-2 flex flex-col justify-between shrink-0"
+            className="rounded-2xl px-2.5 py-2 flex flex-col justify-between gap-0.5"
             style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
           >
             <MiniAmountLine label="المبلغ الإجمالي" value={amt(financials ? financials.total_amount + financials.montage_amount + financials.delivery_amount : null)} />
@@ -118,19 +118,19 @@ function BonQuarter({
             <MiniAmountLine label="مبلغ التوصيل" value={amt(financials?.delivery_amount)} />
           </div>
 
-          {/* Details / Description Card - FLEX-1 GROW to fill remaining height */}
+          {/* Description Card - Content height with rounded corners */}
           <div
-            className="flex-1 rounded-xl px-2.5 py-2 flex flex-col justify-start min-h-0 overflow-hidden"
+            className="rounded-2xl px-2.5 py-1.5 flex-1 flex flex-col justify-start overflow-hidden"
             style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
           >
             <span className="font-bold text-neutral-950 text-[10px] block mb-0.5">تفاصيل النموذج : </span>
-            <span className="text-neutral-900 text-[9.5px] leading-snug overflow-y-auto">{order.description || ''}</span>
+            <span className="text-neutral-900 text-[9.5px] leading-snug line-clamp-2">{order.description || ''}</span>
           </div>
         </div>
       </div>
 
       {/* 4. Footer Area */}
-      <div className="shrink-0 pt-0.5">
+      <div>
         <p className="text-[8px] text-left text-neutral-400 mb-0.5" dir="ltr">Réf. {order.order_number}</p>
         <div className="border-t border-neutral-200 pt-1 text-center">
           <p className="font-bold text-neutral-900 text-[9.5px] leading-none mb-0.5">شكرا لكم على زيارتكم و على ثقتكم</p>
@@ -190,7 +190,6 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
           }
           .bon-quarter {
             border: 1px dashed #aaa !important;
-            height: 100% !important;
             box-sizing: border-box !important;
           }
         }
