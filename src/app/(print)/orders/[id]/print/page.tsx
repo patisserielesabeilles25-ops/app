@@ -44,7 +44,7 @@ function MiniAmountLine({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** One compact bon copy — wider banner, no text truncation */
+/** One compact bon copy */
 function BonQuarter({
   order,
   financials,
@@ -72,7 +72,7 @@ function BonQuarter({
 }) {
   return (
     <div
-      className="bon-quarter flex flex-col justify-between h-full p-2.5 bg-white rounded-xl border border-neutral-200 overflow-hidden box-border"
+      className="bon-quarter flex flex-col justify-between p-2.5 bg-white rounded-xl border border-neutral-200 overflow-hidden box-border"
       dir="rtl"
     >
       {/* 1. Header Banner - Full Width */}
@@ -89,11 +89,11 @@ function BonQuarter({
         <MiniField label="التاريخ" value={arInvoiceDate(order.delivery_date, order.delivery_time)} />
       </div>
 
-      {/* 3. Middle area: Flex-1 dynamic fill height */}
+      {/* 3. Middle area: Image & Amounts */}
       <div className="flex-1 grid grid-cols-2 gap-1.5 min-h-0 mb-1.5">
-        {/* Column 1 (Right in RTL): Tall Image Card - fills 100% height */}
+        {/* Column 1 (Right in RTL): Tall Image Card */}
         <div
-          className="flex items-center justify-center overflow-hidden rounded-xl h-full p-1.5"
+          className="flex items-center justify-center overflow-hidden rounded-xl h-full p-1.5 min-h-[160px]"
           style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
         >
           {imageUrl ? (
@@ -104,7 +104,7 @@ function BonQuarter({
           )}
         </div>
 
-        {/* Column 2 (Left in RTL): Amounts Card + Description Card - fills 100% height */}
+        {/* Column 2 (Left in RTL): Amounts Card + Description Card */}
         <div className="flex flex-col gap-1.5 h-full min-h-0">
           {/* Amounts Card */}
           <div
@@ -160,30 +160,25 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
           .no-print { display: none !important; }
           @page {
             size: A4 portrait;
-            margin: 4mm !important;
+            margin: 5mm !important;
           }
           html, body {
             background: #fff !important;
             margin: 0 !important;
             padding: 0 !important;
             width: 210mm !important;
-            height: 297mm !important;
-            overflow: hidden !important;
           }
           .print-wrapper {
             padding: 0 !important;
             margin: 0 !important;
             background: #fff !important;
-            width: 202mm !important;
-            height: 289mm !important;
-            overflow: hidden !important;
+            width: 200mm !important;
           }
-          .grid-4up {
-            width: 202mm !important;
-            height: 289mm !important;
+          .grid-2up {
+            width: 200mm !important;
+            height: 140mm !important;
             grid-template-columns: 1fr 1fr !important;
-            grid-template-rows: 1fr 1fr !important;
-            gap: 3mm !important;
+            gap: 4mm !important;
             margin: 0 !important;
             padding: 0 !important;
             box-sizing: border-box !important;
@@ -191,20 +186,19 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
           .bon-quarter {
             border: 1px dashed #aaa !important;
             box-sizing: border-box !important;
+            height: 140mm !important;
           }
         }
-        .grid-4up {
+        .grid-2up {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          grid-template-rows: 1fr 1fr;
           gap: 12px;
           width: 100%;
           box-sizing: border-box;
         }
         @media screen {
-          .grid-4up {
+          .grid-2up {
             max-width: 210mm;
-            height: 297mm;
             margin: 0 auto;
             background: #fff;
             padding: 6mm;
@@ -215,9 +209,7 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
 
       <PrintButton />
 
-      <div className="grid-4up">
-        <BonQuarter order={order} financials={financials} imageUrl={imageUrl} amt={amt} />
-        <BonQuarter order={order} financials={financials} imageUrl={imageUrl} amt={amt} />
+      <div className="grid-2up">
         <BonQuarter order={order} financials={financials} imageUrl={imageUrl} amt={amt} />
         <BonQuarter order={order} financials={financials} imageUrl={imageUrl} amt={amt} />
       </div>
