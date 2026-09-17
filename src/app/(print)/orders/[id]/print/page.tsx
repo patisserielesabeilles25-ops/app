@@ -75,7 +75,7 @@ function BonQuarter({
       {/* Banner */}
       <div style={{ marginBottom: '3px', paddingBottom: '2px', borderBottom: '1px solid #e5e5e5' }} dir="ltr">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/Banner.png" alt="Les Abeilles" style={{ width: '100%', height: 'auto', maxHeight: '38px', objectFit: 'contain' }} />
+        <img src="/Banner.png" alt="Les Abeilles" style={{ width: '100%', height: 'auto', maxHeight: '36px', objectFit: 'contain' }} />
       </div>
 
       {/* Customer fields — 2×2 grid */}
@@ -90,17 +90,17 @@ function BonQuarter({
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px', marginBottom: '2px' }}>
         <div
           className="flex items-center justify-center overflow-hidden rounded-lg"
-          style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact', height: '100px' }}
+          style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact', height: '95px' }}
         >
           {imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={imageUrl} alt="Modèle" style={{ maxHeight: '94px', width: '100%', objectFit: 'contain' }} />
+            <img src={imageUrl} alt="Modèle" style={{ maxHeight: '90px', width: '100%', objectFit: 'contain' }} />
           ) : (
             <span style={{ fontSize: '24px' }}>🎂</span>
           )}
         </div>
         <div
-          className="rounded-lg px-2 py-1.5"
+          className="rounded-lg px-2 py-1.5 flex flex-col justify-center gap-0.5"
           style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
         >
           <MiniAmountLine label="المبلغ الإجمالي" value={amt(financials ? financials.total_amount + financials.montage_amount + financials.delivery_amount : null)} />
@@ -144,12 +144,45 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
   const amt = (n: number | null | undefined) => (n != null ? `${formatAmount(n)} DA` : '—');
 
   return (
-    <div className="min-h-screen bg-neutral-200 py-6">
+    <div className="print-wrapper min-h-screen bg-neutral-200 py-6">
       <style>{`
         @media print {
           .no-print { display: none !important; }
-          @page { size: A4; margin: 6mm; }
-          html, body { background: #fff !important; margin: 0; padding: 0; }
+          @page {
+            size: A4 portrait;
+            margin: 0 !important;
+          }
+          html, body {
+            background: #fff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 210mm !important;
+            height: 297mm !important;
+            overflow: hidden !important;
+          }
+          .print-wrapper {
+            padding: 0 !important;
+            margin: 0 !important;
+            background: #fff !important;
+            min-height: 297mm !important;
+            height: 297mm !important;
+            overflow: hidden !important;
+          }
+          .grid-4up {
+            width: 210mm !important;
+            height: 297mm !important;
+            gap: 4mm !important;
+            padding: 4mm !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+          }
+          .bon-quarter {
+            border: 1px dashed #bbb !important;
+            border-radius: 6px !important;
+            padding: 4px 6px !important;
+            height: 100% !important;
+            box-sizing: border-box !important;
+          }
         }
         .grid-4up {
           display: grid;
@@ -157,6 +190,7 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
           grid-template-rows: 1fr 1fr;
           gap: 6px;
           width: 100%;
+          box-sizing: border-box;
         }
         .bon-quarter {
           border: 1px solid #e0e0e0;
@@ -164,20 +198,16 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
           padding: 6px 8px;
           background: #fff;
           overflow: hidden;
-        }
-        @media print {
-          .grid-4up {
-            height: 285mm; /* A4 height minus margins */
-            gap: 4px;
-          }
-          .bon-quarter {
-            border: 1px solid #ccc;
-          }
+          box-sizing: border-box;
         }
         @media screen {
           .grid-4up {
-            max-width: 820px;
+            max-width: 210mm;
+            aspect-ratio: 210 / 297;
             margin: 0 auto;
+            background: #fff;
+            padding: 5mm;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
           }
         }
       `}</style>
