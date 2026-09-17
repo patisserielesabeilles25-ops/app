@@ -26,11 +26,11 @@ function arInvoiceDate(dateStr: string, timeStr: string): string {
 function MiniField({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div
-      className="rounded-xl px-2 py-1 flex items-center justify-between gap-1"
+      className="rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1"
       style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
     >
-      <span className="font-bold text-neutral-950 text-[9.5px] shrink-0">{label} : </span>
-      <span className="font-semibold text-neutral-900 text-[9.5px] truncate">{value}</span>
+      <span className="font-bold text-neutral-950 text-[10px] shrink-0">{label} : </span>
+      <span className="font-semibold text-neutral-900 text-[10px] truncate">{value}</span>
     </div>
   );
 }
@@ -38,13 +38,13 @@ function MiniField({ label, value }: { label: string; value: React.ReactNode }) 
 function MiniAmountLine({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-1">
-      <span className="font-bold text-neutral-950 text-[9px] whitespace-nowrap">{label} :</span>
-      <span className="font-semibold text-neutral-900 text-[9px] whitespace-nowrap">{value}</span>
+      <span className="font-bold text-neutral-950 text-[9.5px] whitespace-nowrap">{label} :</span>
+      <span className="font-semibold text-neutral-900 text-[9.5px] whitespace-nowrap">{value}</span>
     </div>
   );
 }
 
-/** One compact bon copy — designed to perfectly replicate the original bon layout in quarter-A4 */
+/** One compact bon copy — designed to perfectly fill quarter-A4 with flex-1 image & description */
 function BonQuarter({
   order,
   financials,
@@ -72,73 +72,70 @@ function BonQuarter({
 }) {
   return (
     <div
-      className="bon-quarter flex flex-col justify-between h-full p-2 bg-white rounded-xl border border-neutral-200 overflow-hidden box-border"
+      className="bon-quarter flex flex-col h-full p-2.5 bg-white rounded-xl border border-neutral-200 overflow-hidden box-border"
       dir="rtl"
     >
-      {/* Top / Main Content Area */}
-      <div className="flex flex-col gap-1">
-        {/* Banner */}
-        <div className="border-b border-neutral-200 pb-0.5" dir="ltr">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/Banner.png" alt="Les Abeilles" className="w-full h-auto max-h-[38px] object-contain mx-auto" />
+      {/* 1. Header Banner */}
+      <div className="border-b border-neutral-200 pb-1 mb-1.5 shrink-0" dir="ltr">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/Banner.png" alt="Les Abeilles" className="w-full h-auto max-h-[42px] object-contain mx-auto" />
+      </div>
+
+      {/* 2. Customer fields (2x2 grid) */}
+      <div className="grid grid-cols-2 gap-1.5 mb-1.5 shrink-0">
+        <MiniField label="رقم الهاتف" value={order.customer_phone} />
+        <MiniField label="الإسم" value={order.customer_name} />
+        <MiniField label="التوصيل" value={order.fulfillment === 'DELIVERY' ? 'توصيل' : 'استلام من المحل'} />
+        <MiniField label="التاريخ" value={arInvoiceDate(order.delivery_date, order.delivery_time)} />
+      </div>
+
+      {/* 3. Middle area: FLEX-1 GROW to fill all vertical space & eliminate white gaps */}
+      <div className="flex-1 grid grid-cols-2 gap-1.5 min-h-0 mb-1.5">
+        {/* Column 1 (Right in RTL): Tall Image Card - fills 100% height */}
+        <div
+          className="flex items-center justify-center overflow-hidden rounded-xl h-full p-1.5"
+          style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
+        >
+          {imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={imageUrl} alt="Modèle" className="h-full w-full object-contain rounded-lg" />
+          ) : (
+            <span className="text-4xl">🎂</span>
+          )}
         </div>
 
-        {/* Customer fields (2x2 grid) */}
-        <div className="grid grid-cols-2 gap-1">
-          <MiniField label="رقم الهاتف" value={order.customer_phone} />
-          <MiniField label="الإسم" value={order.customer_name} />
-          <MiniField label="التوصيل" value={order.fulfillment === 'DELIVERY' ? 'توصيل' : 'استلام من المحل'} />
-          <MiniField label="التاريخ" value={arInvoiceDate(order.delivery_date, order.delivery_time)} />
-        </div>
-
-        {/* Middle area: Image on Right (in RTL), Amounts & Description on Left (in RTL) */}
-        <div className="grid grid-cols-2 gap-1 items-stretch mt-0.5">
-          {/* Column 1 (Right in RTL): Tall Image Card */}
+        {/* Column 2 (Left in RTL): Amounts Card + Description Card - fills 100% height */}
+        <div className="flex flex-col gap-1.5 h-full min-h-0">
+          {/* Amounts Card */}
           <div
-            className="flex items-center justify-center overflow-hidden rounded-xl h-full min-h-[175px] p-1"
+            className="rounded-xl px-2.5 py-2 flex flex-col justify-between shrink-0"
             style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
           >
-            {imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={imageUrl} alt="Modèle" className="max-h-[170px] w-full object-contain rounded-lg" />
-            ) : (
-              <span className="text-3xl">🎂</span>
-            )}
+            <MiniAmountLine label="المبلغ الإجمالي" value={amt(financials ? financials.total_amount + financials.montage_amount + financials.delivery_amount : null)} />
+            <MiniAmountLine label="المبلغ المدفوع" value={amt(financials?.advance_payment)} />
+            <MiniAmountLine label="المبلغ المتبقي" value={amt(financials?.remaining_amount)} />
+            <MiniAmountLine label="مبلغ التركيب" value={amt(financials?.montage_amount)} />
+            <MiniAmountLine label="مبلغ التوصيل" value={amt(financials?.delivery_amount)} />
           </div>
 
-          {/* Column 2 (Left in RTL): Amounts Card + Details Card */}
-          <div className="flex flex-col gap-1 justify-between">
-            {/* Amounts Card */}
-            <div
-              className="rounded-xl px-2 py-1.5 flex flex-col gap-0.5 justify-between"
-              style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
-            >
-              <MiniAmountLine label="المبلغ الإجمالي" value={amt(financials ? financials.total_amount + financials.montage_amount + financials.delivery_amount : null)} />
-              <MiniAmountLine label="المبلغ المدفوع" value={amt(financials?.advance_payment)} />
-              <MiniAmountLine label="المبلغ المتبقي" value={amt(financials?.remaining_amount)} />
-              <MiniAmountLine label="مبلغ التركيب" value={amt(financials?.montage_amount)} />
-              <MiniAmountLine label="مبلغ التوصيل" value={amt(financials?.delivery_amount)} />
-            </div>
-
-            {/* Details / Description Card */}
-            <div
-              className="flex-1 rounded-xl px-2 py-1 flex flex-col justify-start"
-              style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
-            >
-              <span className="font-bold text-neutral-950 text-[9.5px]">تفاصيل النموذج : </span>
-              <span className="text-neutral-900 text-[9px] leading-tight line-clamp-3">{order.description || ''}</span>
-            </div>
+          {/* Details / Description Card - FLEX-1 GROW to fill remaining height */}
+          <div
+            className="flex-1 rounded-xl px-2.5 py-2 flex flex-col justify-start min-h-0 overflow-hidden"
+            style={{ backgroundColor: YELLOW, printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact' }}
+          >
+            <span className="font-bold text-neutral-950 text-[10px] block mb-0.5">تفاصيل النموذج : </span>
+            <span className="text-neutral-900 text-[9.5px] leading-snug overflow-y-auto">{order.description || ''}</span>
           </div>
         </div>
       </div>
 
-      {/* Footer Area */}
-      <div className="mt-0.5">
-        <p className="text-[7.5px] text-left text-neutral-400 mb-0.5" dir="ltr">Réf. {order.order_number}</p>
-        <div className="border-t border-neutral-200 pt-0.5 text-center">
-          <p className="font-bold text-neutral-900 text-[9px] leading-none mb-0.5">شكرا لكم على زيارتكم و على ثقتكم</p>
-          <p className="font-bold text-neutral-800 text-[8px] leading-none mb-0.5" dir="ltr">0770752079 / 0774000952 / 0553 51 50 68</p>
-          <p className="text-neutral-700 text-[7px] leading-none" dir="ltr">
+      {/* 4. Footer Area */}
+      <div className="shrink-0 pt-0.5">
+        <p className="text-[8px] text-left text-neutral-400 mb-0.5" dir="ltr">Réf. {order.order_number}</p>
+        <div className="border-t border-neutral-200 pt-1 text-center">
+          <p className="font-bold text-neutral-900 text-[9.5px] leading-none mb-0.5">شكرا لكم على زيارتكم و على ثقتكم</p>
+          <p className="font-bold text-neutral-800 text-[8.5px] leading-none mb-0.5" dir="ltr">0770752079 / 0774000952 / 0553 51 50 68</p>
+          <p className="text-neutral-700 text-[7.5px] leading-none" dir="ltr">
             INSTA : les.abeilles.25 / TIKTOK : nahlacake / FB : Patisserie les abeilles
           </p>
         </div>
