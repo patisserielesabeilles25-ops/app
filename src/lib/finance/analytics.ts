@@ -150,6 +150,20 @@ export async function getOrderAnalytics(range: Range): Promise<OrderAnalytics> {
       outstanding += num(f.remaining_amount);
     }
   }
+
+  // Include non-order income (Magasin direct sales & manual income recorded in /finance/income/new)
+  const { data: nonOrderIncome } = await service
+    .from('financial_transactions')
+    .select('amount')
+    .eq('type', 'INCOME')
+    .is('order_id', null)
+    .gte('occurred_at', range.from)
+    .lte('occurred_at', range.to);
+
+  for (const item of nonOrderIncome ?? []) {
+    revenue += num(item.amount);
+  }
+
   const avgOrderValue = totalOrders ? revenue / totalOrders : 0;
 
   // Top clients (lifetime order count).
@@ -168,7 +182,7 @@ export async function getOrderAnalytics(range: Range): Promise<OrderAnalytics> {
     .slice(0, 5)
     .map(([id, count]) => ({ name: productLabel.get(id) || 'Produit', count }));
 
-  // Revenue by month (last 6 months) from a total_amount lookup.
+  // Revenue by month (last 6 months) from order total_amount + non-order income lookup.
   const revByMonthKey = new Map<string, number>();
   if (trend.length > 0) {
     const trendIds = trend.map((o) => o.id as string);
@@ -187,6 +201,20 @@ export async function getOrderAnalytics(range: Range): Promise<OrderAnalytics> {
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       revByMonthKey.set(key, (revByMonthKey.get(key) ?? 0) + (totalById.get(o.id as string) ?? 0));
     }
+  }
+
+  // Include non-order income for the 6-month revenue trend
+  const { data: trendNonOrderIncome } = await service
+    .from('financial_transactions')
+    .select('amount, occurred_at')
+    .eq('type', 'INCOME')
+    .is('order_id', null)
+    .gte('occurred_at', sixIso);
+
+  for (const item of trendNonOrderIncome ?? []) {
+    const d = new Date(item.occurred_at as string);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    revByMonthKey.set(key, (revByMonthKey.get(key) ?? 0) + num(item.amount));
   }
   const revenueByMonth: { label: string; revenue: number }[] = [];
   const cursor = new Date();
