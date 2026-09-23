@@ -55,7 +55,7 @@ export async function getOrderAnalytics(range: Range): Promise<OrderAnalytics> {
       .gte('created_at', range.from)
       .lte('created_at', range.to)
       .limit(100000),
-    service.from('orders').select('id, created_at').gte('created_at', sixIso).limit(100000),
+    service.from('orders').select('id, created_at, returned_at').gte('created_at', sixIso).limit(100000),
     service.from('customers').select('id, name, date_of_birth').limit(100000),
     service.from('products').select('id, name, diameter_cm').limit(100000),
   ]);
@@ -134,8 +134,8 @@ export async function getOrderAnalytics(range: Range): Promise<OrderAnalytics> {
     .map(([key, count]) => ({ key, count }))
     .sort((a, b) => b.count - a.count);
 
-  // Revenue / collected / outstanding from financials of the period's orders.
-  const periodIds = period.map((o) => o.id as string);
+  // Select trend orders including returned_at
+  const periodIds = period.filter((o) => !o.returned_at).map((o) => o.id as string);
   let revenue = 0;
   let collected = 0;
   let outstanding = 0;
@@ -161,7 +161,9 @@ export async function getOrderAnalytics(range: Range): Promise<OrderAnalytics> {
     .lte('occurred_at', range.to);
 
   for (const item of nonOrderIncome ?? []) {
-    revenue += num(item.amount);
+    const amt = num(item.amount);
+    revenue += amt;
+    collected += amt;
   }
 
   const avgOrderValue = totalOrders ? revenue / totalOrders : 0;
@@ -185,7 +187,8 @@ export async function getOrderAnalytics(range: Range): Promise<OrderAnalytics> {
   // Revenue by month (last 6 months) from order total_amount + non-order income lookup.
   const revByMonthKey = new Map<string, number>();
   if (trend.length > 0) {
-    const trendIds = trend.map((o) => o.id as string);
+    const activeTrend = trend.filter((o) => !o.returned_at);
+    const trendIds = activeTrend.map((o) => o.id as string);
     const totalById = new Map<string, number>();
     // Fetch financials in chunks to stay well within limits.
     for (let i = 0; i < trendIds.length; i += 500) {
@@ -196,7 +199,7 @@ export async function getOrderAnalytics(range: Range): Promise<OrderAnalytics> {
         .in('order_id', chunk);
       for (const f of fin ?? []) totalById.set(f.order_id as string, num(f.total_amount));
     }
-    for (const o of trend) {
+    for (const o of activeTrend) {
       const d = new Date(o.created_at as string);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       revByMonthKey.set(key, (revByMonthKey.get(key) ?? 0) + (totalById.get(o.id as string) ?? 0));
