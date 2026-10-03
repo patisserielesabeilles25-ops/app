@@ -62,7 +62,11 @@ export function PayEmployeeDialog({ info }: { info: PayInfo }) {
                 <span className="font-semibold text-neutral-800">{methodLabel(locale, info.method)}</span>
               </div>
               <div className="flex justify-between py-0.5">
-                <span className="text-neutral-500">{tr(locale, `Gains (${info.periodLabel})`, `الأرباح (${info.periodLabel})`)}</span>
+                <span className="text-neutral-500">
+                  {info.method === 'PIECE_BASED'
+                    ? tr(locale, 'Total des gains', 'إجمالي الأرباح')
+                    : tr(locale, `Gains (${info.periodLabel})`, `الأرباح (${info.periodLabel})`)}
+                </span>
                 <span className="font-semibold text-neutral-800">{formatAmount(info.gains)} DA</span>
               </div>
               {info.absence > 0 ? (
